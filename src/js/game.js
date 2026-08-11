@@ -3,6 +3,16 @@ import { playSound, initAudio } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, CAPSULE_WEIGHTS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 
 export class Game {
+    startGame(difficulty) {
+    initAudio(); // Importe a função initAudio aqui também!
+    this.gameRunning = true;
+    this.score = 0;
+    this.lives = 5;
+    this.initLevel(this.currentLevel);
+    this.resetBall();
+    document.getElementById('menu').style.display = 'none'; // Esconde o menu
+    requestAnimationFrame(() => this.update());
+}
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
