@@ -98,7 +98,7 @@ export class Game {
         const overlay = document.getElementById('iosPickerOverlay');
         const wheelList = document.getElementById('wheelList');
         const container = document.getElementById('wheelContainer');
-        if (!overlay || !wheelList) return;
+        if (!overlay || !wheelList || !container) return;
 
         wheelList.innerHTML = '';
         for (let i = 1; i <= this.TOTAL_LEVELS; i++) {
@@ -109,13 +109,10 @@ export class Game {
             
             li.addEventListener('click', () => {
                 this.currentLevel = i;
-                const targetItem = wheelList.querySelector(`[data-level="${i}"]`);
-                if (targetItem && container) {
-                    container.scrollTo({
-                        top: targetItem.offsetTop - container.clientHeight / 2 + targetItem.clientHeight / 2,
-                        behavior: 'smooth'
-                    });
-                }
+                container.scrollTo({
+                    top: (i - 1) * 50,
+                    behavior: 'smooth'
+                });
             });
             
             wheelList.appendChild(li);
@@ -123,11 +120,8 @@ export class Game {
         overlay.style.display = 'flex';
 
         setTimeout(() => {
-            const targetItem = wheelList.querySelector(`[data-level="${this.currentLevel}"]`);
-            if (targetItem && container) {
-                container.scrollTop = targetItem.offsetTop - container.clientHeight / 2 + targetItem.clientHeight / 2;
-            }
-        }, 30);
+            container.scrollTop = (this.currentLevel - 1) * 50;
+        }, 10);
     }
 
     closeIosPicker() {
@@ -137,28 +131,9 @@ export class Game {
 
     confirmIosPicker() {
         const container = document.getElementById('wheelContainer');
-        const items = document.querySelectorAll('.ios-wheel-item');
-        
-        if (container && items.length > 0) {
-            const containerRect = container.getBoundingClientRect();
-            const containerCenter = containerRect.top + containerRect.height / 2;
-            
-            let closestItem = items[0];
-            let minDistance = Infinity;
-
-            items.forEach(item => {
-                const rect = item.getBoundingClientRect();
-                const itemCenter = rect.top + rect.height / 2;
-                const distance = Math.abs(containerCenter - itemCenter);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestItem = item;
-                }
-            });
-
-            if (closestItem) {
-                this.currentLevel = parseInt(closestItem.dataset.level);
-            }
+        if (container) {
+            let index = Math.round(container.scrollTop / 50);
+            this.currentLevel = Math.max(1, Math.min(this.TOTAL_LEVELS, index + 1));
         }
 
         this.closeIosPicker();
@@ -264,8 +239,15 @@ export class Game {
         const startX = (this.canvas.width - (this.brickCols * (this.brickW + this.padding))) / 2;
         let pattern = [];
 
+        // Todas as 20 fases com designs customizados e exclusivos
         if (level === 1) {
-            for (let r = 0; r < 6; r++) pattern.push([1,1,1,1,1,1,1,1,1]);
+            pattern = [
+                [1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1]
+            ];
         } else if (level === 2) {
             pattern = [
                 [1,1,1, 0, 1,0,0,0,1],
@@ -275,6 +257,57 @@ export class Game {
                 [1,0,0, 0, 1,0,0,0,1],
                 [1,0,0, 0, 1,0,0,0,1],
                 [1,1,1, 0, 1,0,0,0,1]
+            ];
+        } else if (level === 3) {
+            // Letra C
+            pattern = [
+                [0,1,1,1,1,1,1,0,0],
+                [1,1,0,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0,0,0],
+                [1,0,0,0,0,0,0,0,0],
+                [1,1,0,0,0,0,0,0,0],
+                [0,1,1,1,1,1,1,0,0]
+            ];
+        } else if (level === 4) {
+            // Letra M
+            pattern = [
+                [1,0,0,0,0,0,0,0,1],
+                [1,1,0,0,0,0,0,1,1],
+                [1,0,1,0,0,0,1,0,1],
+                [1,0,0,1,0,1,0,0,1],
+                [1,0,0,0,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,1]
+            ];
+        } else if (level === 5) {
+            // Letra H
+            pattern = [
+                [1,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,1]
+            ];
+        } else if (level === 6) {
+            // Letra W
+            pattern = [
+                [1,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,1],
+                [1,0,0,0,1,0,0,0,1],
+                [1,0,0,1,0,1,0,0,1],
+                [1,0,1,0,0,0,1,0,1],
+                [1,1,0,0,0,0,0,1,1]
+            ];
+        } else if (level === 7) {
+            // Diamante
+            pattern = [
+                [0,0,0,0,1,0,0,0,0],
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,1,1,3,1,1,0,0],
+                [0,1,1,1,1,1,1,1,0],
+                [0,0,1,1,3,1,1,0,0],
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,0,0,1,0,0,0,0]
             ];
         } else if (level === 8) {
             pattern = [
@@ -286,6 +319,16 @@ export class Game {
                 [0,0, 5,0,0,5, 0,0,0],
                 [0,0, 5,1,1,5, 0,0,0],
                 [0,0, 5,5,5,5, 0,0,0]
+            ];
+        } else if (level === 9) {
+            // Círculo
+            pattern = [
+                [0,0,1,1,1,1,1,0,0],
+                [0,1,0,0,0,0,0,1,0],
+                [1,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,1],
+                [0,1,0,0,0,0,0,1,0],
+                [0,0,1,1,1,1,1,0,0]
             ];
         } else if (level === 10) {
             pattern = [
@@ -306,6 +349,86 @@ export class Game {
                 [0,0,5,1,1,1,5,0,0],
                 [0,5,0,0,0,0,0,5,0],
                 [5,0,0,0,0,0,0,0,5]
+            ];
+        } else if (level === 12) {
+            // Coroa
+            pattern = [
+                [1,0,0,0,1,0,0,0,1],
+                [1,1,0,1,1,1,0,1,1],
+                [0,1,1,1,1,1,1,1,0],
+                [0,0,1,1,1,1,1,0,0],
+                [0,0,0,1,1,1,0,0,0]
+            ];
+        } else if (level === 13) {
+            // Flor
+            pattern = [
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,1,1,3,1,1,0,0],
+                [0,1,1,3,4,3,1,1,0],
+                [0,0,1,1,3,1,1,0,0],
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,0,0,3,0,0,0,0],
+                [0,0,0,0,3,0,0,0,0]
+            ];
+        } else if (level === 14) {
+            // Foguete
+            pattern = [
+                [0,0,0,0,1,0,0,0,0],
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,1,1,1,1,1,0,0],
+                [1,1,1,1,1,1,1,1,1],
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,1,0,0,0,1,0,0],
+                [0,1,0,0,0,0,0,1,0]
+            ];
+        } else if (level === 15) {
+            // Pac-Man
+            pattern = [
+                [0,0,1,1,1,1,1,0,0],
+                [0,1,1,1,1,1,1,1,0],
+                [1,1,1,1,0,0,1,1,1],
+                [1,1,1,0,0,0,0,1,1],
+                [0,1,1,1,1,1,1,1,0],
+                [0,0,1,1,1,1,1,0,0]
+            ];
+        } else if (level === 16) {
+            // Pirâmide
+            pattern = [
+                [0,0,0,0,1,0,0,0,0],
+                [0,0,0,1,1,1,0,0,0],
+                [0,0,1,1,1,1,1,0,0],
+                [0,1,1,1,1,1,1,1,0],
+                [1,1,1,1,1,1,1,1,1],
+                [5,5,5,5,5,5,5,5,5]
+            ];
+        } else if (level === 17) {
+            // Colunas verticais
+            pattern = [
+                [1,0,1,0,1,0,1,0,1],
+                [1,0,1,0,1,0,1,0,1],
+                [3,0,3,0,3,0,3,0,3],
+                [3,0,3,0,3,0,3,0,3],
+                [1,0,1,0,1,0,1,0,1],
+                [1,0,1,0,1,0,1,0,1]
+            ];
+        } else if (level === 18) {
+            // Labirinto
+            pattern = [
+                [1,1,1,0,1,0,1,1,1],
+                [1,0,0,0,1,0,0,0,1],
+                [1,0,1,1,1,1,1,0,1],
+                [1,0,0,0,0,0,0,0,1],
+                [1,1,1,0,5,0,1,1,1],
+                [0,0,0,0,5,0,0,0,0]
+            ];
+        } else if (level === 19) {
+            // Arco duplo
+            pattern = [
+                [1,1,0,0,0,0,0,1,1],
+                [1,1,1,0,0,0,1,1,1],
+                [0,1,1,1,0,1,1,1,0],
+                [0,0,1,1,1,1,1,0,0],
+                [0,0,0,1,1,1,0,0,0]
             ];
         } else if (level === 20) {
             pattern = [
