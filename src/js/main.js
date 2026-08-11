@@ -34,6 +34,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Vigia a rotação da tela: se o usuário virar o celular para a horizontal, o jogo pausa imediatamente
+    const landscapeQuery = window.matchMedia("(orientation: landscape)");
+    function handleOrientationChange(e) {
+        if (e.matches && window.innerWidth <= 900) {
+            if (game.gameRunning) {
+                game.gameRunning = false; // Pausa o motor do jogo
+            }
+        }
+    }
+    if (landscapeQuery.addEventListener) {
+        landscapeQuery.addEventListener('change', handleOrientationChange);
+    } else {
+        landscapeQuery.addListener(handleOrientationChange);
+    }
+
     // Botões de Dificuldade do Menu Principal
     document.getElementById('btnEasy').addEventListener('click', () => {
         lockPortrait();
