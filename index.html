@@ -36,8 +36,8 @@
         <button class="btn-quit">Menu Principal</button>
     </div>
 
-    <!-- Modal iOS Picker (Seletor de Fases) -->
-    <div id="iosPickerOverlay">
+    <!-- Modal iOS Picker (Padrão Ouro) -->
+    <div id="iosPickerOverlay" style="display: none;">
         <div class="ios-picker-sheet">
             <div class="ios-picker-header">
                 <button class="ios-btn-cancel">Cancelar</button>
@@ -45,7 +45,9 @@
                 <button class="ios-btn-select">Selecionar</button>
             </div>
             <div class="ios-wheel-container" id="wheelContainer">
+                <div class="ios-wheel-shade-top"></div>
                 <div class="ios-wheel-highlight"></div>
+                <div class="ios-wheel-shade-bottom"></div>
                 <ul class="ios-wheel-list" id="wheelList"></ul>
             </div>
         </div>
@@ -71,7 +73,6 @@
     <canvas id="gameCanvas"></canvas>
 </div>
 
-<!-- Script Principal no padrão de Módulos ES6 -->
 <script type="module" src="src/js/main.js"></script>
 
 </body>
