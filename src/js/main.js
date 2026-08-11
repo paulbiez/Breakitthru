@@ -1,11 +1,22 @@
+// src/js/main.js
 import { Game } from './game.js';
+import { IosPicker } from './IosPicker.js';
 import { initInputs } from './input.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
     const game = new Game(canvas);
 
-    // Controles de toque e mouse para mover a raquete
+    // Instancia o módulo do Seletor iOS isolado
+    const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
+        game.currentLevel = level;
+        let selectBtn = document.getElementById('selectLevelBtn');
+        if (selectBtn) {
+            selectBtn.innerText = `Fase: ${level}`;
+        }
+    });
+
+    // Inicializa os controles de toque e mouse para mover a raquete
     initInputs(canvas, game.paddle, {
         onLaunch: () => {
             game.launchBalls();
@@ -17,21 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnMedium').addEventListener('click', () => game.startGame('medium'));
     document.getElementById('btnHard').addEventListener('click', () => game.startGame('hard'));
 
-    // Botão para abrir o seletor de fases
-    document.getElementById('selectLevelBtn').addEventListener('click', () => game.openIosPicker());
-    
-    // Botões do Modal do Seletor de Fases
-    const btnCancel = document.querySelector('.ios-btn-cancel');
-    if (btnCancel) {
-        btnCancel.addEventListener('click', () => game.closeIosPicker());
-    }
-
-    const btnConfirm = document.querySelector('.ios-btn-select');
-    if (btnConfirm) {
-        btnConfirm.addEventListener('click', () => {
-            game.confirmIosPicker();
-        });
-    }
+    // Botão para abrir o seletor de fases usando o módulo
+    document.getElementById('selectLevelBtn').addEventListener('click', () => {
+        picker.open(game.currentLevel);
+    });
 
     // Botão de Pausa (HUD superior "✕")
     const quitBtn = document.getElementById('quitBtn');
