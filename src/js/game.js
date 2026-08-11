@@ -1,3 +1,4 @@
+// src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
 import { playSound, initAudio } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, CAPSULE_WEIGHTS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
@@ -96,6 +97,7 @@ export class Game {
     openIosPicker() {
         const overlay = document.getElementById('iosPickerOverlay');
         const wheelList = document.getElementById('wheelList');
+        const container = document.getElementById('wheelContainer');
         if (!overlay || !wheelList) return;
 
         wheelList.innerHTML = '';
@@ -107,13 +109,25 @@ export class Game {
             
             li.addEventListener('click', () => {
                 this.currentLevel = i;
-                document.querySelectorAll('.ios-wheel-item').forEach(el => el.classList.remove('selected'));
-                li.classList.add('selected');
+                const targetItem = wheelList.querySelector(`[data-level="${i}"]`);
+                if (targetItem && container) {
+                    container.scrollTo({
+                        top: targetItem.offsetTop - container.clientHeight / 2 + targetItem.clientHeight / 2,
+                        behavior: 'smooth'
+                    });
+                }
             });
             
             wheelList.appendChild(li);
         }
         overlay.style.display = 'flex';
+
+        setTimeout(() => {
+            const targetItem = wheelList.querySelector(`[data-level="${this.currentLevel}"]`);
+            if (targetItem && container) {
+                container.scrollTop = targetItem.offsetTop - container.clientHeight / 2 + targetItem.clientHeight / 2;
+            }
+        }, 30);
     }
 
     closeIosPicker() {
@@ -122,10 +136,31 @@ export class Game {
     }
 
     confirmIosPicker() {
-        const selectedLi = document.querySelector('.ios-wheel-item.selected');
-        if (selectedLi) {
-            this.currentLevel = parseInt(selectedLi.dataset.level);
+        const container = document.getElementById('wheelContainer');
+        const items = document.querySelectorAll('.ios-wheel-item');
+        
+        if (container && items.length > 0) {
+            const containerRect = container.getBoundingClientRect();
+            const containerCenter = containerRect.top + containerRect.height / 2;
+            
+            let closestItem = items[0];
+            let minDistance = Infinity;
+
+            items.forEach(item => {
+                const rect = item.getBoundingClientRect();
+                const itemCenter = rect.top + rect.height / 2;
+                const distance = Math.abs(containerCenter - itemCenter);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestItem = item;
+                }
+            });
+
+            if (closestItem) {
+                this.currentLevel = parseInt(closestItem.dataset.level);
+            }
         }
+
         this.closeIosPicker();
         document.getElementById('selectLevelBtn').innerText = `Fase: ${this.currentLevel}`;
     }
@@ -290,7 +325,6 @@ export class Game {
             for (let c = 0; c < pattern[r].length; c++) {
                 let val = pattern[r][c];
                 if (val > 0) {
-                    // Distribui cores coloridas por linha baseadas no config (BRICK_TYPES)
                     let brickTypeIndex = r % BRICK_TYPES.length;
                     let type = BRICK_TYPES[brickTypeIndex];
                     let hits = 1;
