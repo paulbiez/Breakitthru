@@ -9,12 +9,13 @@
 <body>
 
 <div id="gameContainer">
+    <!-- HUD do Topo -->
     <div id="hud">
         <span id="scoreText">Pts: 0</span>
         <span id="levelText">Fase: 1/20</span>
         <span id="highScoreText" class="high-score">Rec: 0</span>
         <span id="livesText">Vidas: 5</span>
-        <button id="quitBtn" onclick="openPauseMenu()" title="Opções / Pausa">✕</button>
+        <button id="quitBtn" title="Opções / Pausa">✕</button>
     </div>
 
     <!-- Menu Principal -->
@@ -24,25 +25,24 @@
         <button id="btnEasy">Fácil</button>
         <button id="btnMedium">Médio</button>
         <button id="btnHard">Difícil</button>
-        <button id="btnSelect" class="btn-select">Fase: 1</button>
-
+        <button id="selectLevelBtn" class="btn-select">Fase: 1</button>
     </div>
 
     <!-- Menu de Pausa / Desistência -->
     <div id="pauseMenu" style="display: none;">
         <h2 style="margin-bottom: 20px; font-size: 1.8rem;">JOGO PAUSADO</h2>
-        <button class="btn-continue" onclick="resumeGame()">Continuar</button>
-        <button class="btn-restart" onclick="restartFromLevel1()">Reiniciar Jogo (Fase 1)</button>
-        <button class="btn-quit" onclick="quitToMainMenu()">Menu Principal</button>
+        <button class="btn-continue">Continuar</button>
+        <button class="btn-restart">Reiniciar Jogo (Fase 1)</button>
+        <button class="btn-quit">Menu Principal</button>
     </div>
 
-    <!-- Modal iOS Picker Alinhado -->
+    <!-- Modal iOS Picker (Seletor de Fases) -->
     <div id="iosPickerOverlay">
         <div class="ios-picker-sheet">
             <div class="ios-picker-header">
-                <button class="ios-btn-cancel" onclick="closeIosPicker()">Cancelar</button>
+                <button class="ios-btn-cancel">Cancelar</button>
                 <span>Selecionar Fase</span>
-                <button class="ios-btn-select" onclick="confirmIosPicker()">Selecionar</button>
+                <button class="ios-btn-select">Selecionar</button>
             </div>
             <div class="ios-wheel-container" id="wheelContainer">
                 <div class="ios-wheel-highlight"></div>
@@ -51,24 +51,27 @@
         </div>
     </div>
 
+    <!-- Menu de Game Over -->
     <div id="gameOverMenu" style="display: none;">
         <h1 id="gameOverTitle">FIM DE JOGO</h1>
         <p id="finalScore">Pontos Totais: 0</p>
         <p id="newRecordNotice" class="high-score" style="display: none; font-weight: bold;">NOVO RECORDE!</p>
-        <button class="btn-continue" onclick="continueGame()">Continuar (Fase Atual)</button>
-        <button onclick="quitToMainMenu()">Menu Principal</button>
+        <button class="btn-continue">Continuar (Fase Atual)</button>
+        <button class="btn-quit">Menu Principal</button>
     </div>
 
+    <!-- Tela de Vitória -->
     <div id="winOverlay">
         <div class="zoom-text">SENSACIONAL!<br>VOCÊ VENCEU TODOS OS DESAFIOS!</div>
         <p id="winScore" style="color: white; margin-top: 30px; font-size: 1.2rem;">Pontos: 0</p>
-        <button onclick="quitToMainMenu()" style="margin-top: 20px;">Menu Principal</button>
+        <button class="btn-quit" style="margin-top: 20px;">Menu Principal</button>
     </div>
 
+    <!-- Canvas do Jogo -->
     <canvas id="gameCanvas"></canvas>
 </div>
 
-<!-- Script Principal Modular -->
+<!-- Script Principal no padrão de Módulos ES6 -->
 <script type="module" src="src/js/main.js"></script>
 
 </body>
