@@ -116,6 +116,56 @@ button.btn-select { background: #3498db; color: #fff; }
     transform: scale(0.92);
 }
 
+/* --- Tela de Aviso para Modo Paisagem (Bloqueio Visual) --- */
+#landscapeWarning {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10, 10, 15, 0.98);
+    color: #fff;
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 25px;
+    box-sizing: border-box;
+}
+
+.warning-content {
+    max-width: 300px;
+    animation: pulseWarning 2s infinite ease-in-out;
+}
+
+.rotate-icon {
+    font-size: 3.5rem;
+    display: block;
+    margin-bottom: 15px;
+}
+
+#landscapeWarning h2 {
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    color: #FFD700;
+}
+
+#landscapeWarning p {
+    font-size: 1rem;
+    color: #ddd;
+    line-height: 1.5;
+}
+
+@keyframes pulseWarning {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+/* Ativa o aviso automaticamente se for tela de celular na horizontal */
+@media screen and (max-width: 900px) and (orientation: landscape) {
+    #landscapeWarning {
+        display: flex;
+    }
+}
+
 /* Modal iOS Picker - Padrão Ouro 3D */
 #iosPickerOverlay {
     position: absolute;
