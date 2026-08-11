@@ -1,18 +1,9 @@
+// src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
 import { playSound, initAudio } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, CAPSULE_WEIGHTS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 
 export class Game {
-    startGame(difficulty) {
-    initAudio(); // Importe a função initAudio aqui também!
-    this.gameRunning = true;
-    this.score = 0;
-    this.lives = 5;
-    this.initLevel(this.currentLevel);
-    this.resetBall();
-    document.getElementById('menu').style.display = 'none'; // Esconde o menu
-    requestAnimationFrame(() => this.update());
-}
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
@@ -54,6 +45,56 @@ export class Game {
         this.brickW = 35;
         this.brickH = 15;
         this.padding = 5;
+    }
+
+    startGame(difficulty) {
+        initAudio();
+        this.gameRunning = true;
+        this.score = 0;
+        this.lives = 5;
+        
+        let menuEl = document.getElementById('menu');
+        if (menuEl) menuEl.style.display = 'none';
+
+        this.initLevel(this.currentLevel);
+        this.resetBall();
+    }
+
+    openIosPicker() {
+        const overlay = document.getElementById('iosPickerOverlay');
+        const wheelList = document.getElementById('wheelList');
+        if (!overlay || !wheelList) return;
+
+        wheelList.innerHTML = '';
+        for (let i = 1; i <= this.TOTAL_LEVELS; i++) {
+            let li = document.createElement('li');
+            li.className = 'ios-wheel-item' + (i === this.currentLevel ? ' selected' : '');
+            li.innerText = `Fase ${i}`;
+            li.dataset.level = i;
+            
+            li.addEventListener('click', () => {
+                this.currentLevel = i;
+                document.querySelectorAll('.ios-wheel-item').forEach(el => el.classList.remove('selected'));
+                li.classList.add('selected');
+                document.getElementById('selectLevelBtn').innerText = `Fase: ${this.currentLevel}`;
+            });
+            
+            wheelList.appendChild(li);
+        }
+        overlay.style.display = 'flex';
+    }
+
+    closeIosPicker() {
+        const overlay = document.getElementById('iosPickerOverlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    confirmIosPicker() {
+        this.closeIosPicker();
+        document.getElementById('selectLevelBtn').innerText = `Fase: ${this.currentLevel}`;
+        
+        let highScoreEl = document.getElementById('menuHighScore');
+        if (highScoreEl) highScoreEl.innerText = `RECORDE: ${this.highScore}`;
     }
 
     getDeterministicCapsule() {
