@@ -1,113 +1,4 @@
-/* src/css/style.css */
-
-body { 
-    margin: 0; 
-    background: #000; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    height: 100vh; 
-    overflow: hidden; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    touch-action: none; 
-}
-
-#gameContainer { 
-    position: relative; 
-    width: 100%; 
-    max-width: 400px; 
-    height: 100%; 
-    max-height: 700px; 
-    border: 4px solid #555; 
-    box-shadow: inset 0 0 10px #000; 
-    box-sizing: border-box; 
-}
-
-canvas { 
-    display: block; 
-    width: 100%; 
-    height: 100%; 
-    background: #050b30; 
-}
-
-#menu, #gameOverMenu, #pauseMenu { 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    background: rgba(0,0,0,0.92); 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    align-items: center; 
-    color: white; 
-    z-index: 20; 
-    text-align: center; 
-}
-
-button { 
-    padding: 12px 30px; 
-    margin: 6px; 
-    font-size: 1.1rem; 
-    border: none; 
-    border-radius: 20px; 
-    font-weight: bold; 
-    cursor: pointer; 
-    min-width: 190px; 
-    text-align: center; 
-}
-
-button.btn-continue { background: #00FF00; color: #000; }
-button.btn-restart { background: #f39c12; color: #fff; }
-button.btn-quit { background: #e74c3c; color: #fff; }
-button.btn-select { background: #3498db; color: #fff; }
-
-/* HUD com Botão de Quit */
-#hud { 
-    position: absolute; 
-    top: 8px; 
-    left: 10px; 
-    right: 10px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    color: #fff; 
-    font-size: 13px; 
-    font-weight: bold; 
-    pointer-events: none; 
-    z-index: 5; 
-}
-
-.high-score { color: #FFD700; }
-
-#quitBtn {
-    pointer-events: auto;
-    background: rgba(231, 76, 60, 0.85);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.4);
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    min-width: unset;
-    padding: 0;
-    margin: 0;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    line-height: 1;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-}
-
-#quitBtn:active {
-    background: #e74c3c;
-    transform: scale(0.92);
-}
-
-/* Modal iOS Picker */
+/* --- Modal iOS Picker Ajustado para Rolagem --- */
 #iosPickerOverlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -150,30 +41,30 @@ button.btn-select { background: #3498db; color: #fff; }
 
 .ios-wheel-container {
     position: relative;
-    height: 250px;
+    height: 220px;
     background: #fff;
-    overflow: hidden;
+    overflow-y: auto; /* Permite rolar a lista livremente com o dedo */
+    -webkit-overflow-scrolling: touch; /* Rolagem suave no iPhone/Android */
     touch-action: pan-y;
 }
 
 .ios-wheel-highlight {
-    position: absolute;
-    top: 100px; 
-    left: 0; right: 0;
+    position: sticky;
+    top: 85px; 
     height: 50px;
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     background: rgba(0, 0, 0, 0.04);
     pointer-events: none;
+    z-index: 2;
 }
 
 .ios-wheel-list {
-    position: absolute;
+    position: relative;
     width: 100%;
-    top: 0; left: 0;
     list-style: none;
-    padding: 0; margin: 0;
-    transition: transform 0.2s cubic-bezier(0.1, 0.87, 0.35, 1);
+    padding: 0; 
+    margin: 0;
 }
 
 .ios-wheel-item {
@@ -181,32 +72,16 @@ button.btn-select { background: #3498db; color: #fff; }
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 500;
-    color: #aaa;
+    color: #666;
     user-select: none;
     cursor: pointer;
-    transition: color 0.1s, font-size 0.1s, font-weight 0.1s;
 }
 
 .ios-wheel-item.selected {
     color: #000;
     font-weight: bold;
-    font-size: 1.8rem;
-}
-
-#winOverlay {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    display: none; flex-direction: column; justify-content: center; align-items: center;
-    background: rgba(0,0,0,0.85); color: #FFD700; z-index: 30; text-align: center; padding: 20px; box-sizing: border-box;
-}
-
-.zoom-text {
-    font-size: 1.8rem; font-weight: 900; text-shadow: 0 0 20px #FFD700;
-    animation: zoomOutAnim 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-@keyframes zoomOutAnim {
-    0% { transform: scale(3); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    font-size: 1.6rem;
+    background: rgba(52, 152, 219, 0.1);
 }
