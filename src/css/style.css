@@ -1,27 +1,40 @@
 /* src/css/style.css */
 
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    touch-action: none;
+}
+
 body { 
-    margin: 0; 
-    background: #000; 
     display: flex; 
     justify-content: center; 
     align-items: center; 
-    height: 100dvh; 
-    overflow: hidden; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    touch-action: none; 
 }
 
 #gameContainer { 
     position: relative; 
-    /* Ajusta automaticamente para nunca ultrapassar a largura ou a altura da tela */
-    width: min(100vw, calc(100dvh * 400 / 700)); 
-    height: min(100dvh, calc(100vw * 700 / 400)); 
+    width: 100%; 
+    height: 100%; 
     max-width: 400px; 
     max-height: 700px; 
+    aspect-ratio: 400 / 700; 
     border: 4px solid #555; 
     box-shadow: inset 0 0 10px #000; 
     box-sizing: border-box; 
+    overflow: hidden;
+}
+
+canvas { 
+    display: block; 
+    width: 100%; 
+    height: 100%; 
+    background: #050b30; 
 }
 
 #menu, #gameOverMenu, #pauseMenu { 
