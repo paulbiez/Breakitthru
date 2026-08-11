@@ -116,14 +116,14 @@ button.btn-select { background: #3498db; color: #fff; }
     transform: scale(0.92);
 }
 
-/* --- Tela de Aviso para Modo Paisagem (Bloqueio Visual) --- */
+/* --- Tela de Aviso para Modo Paisagem (Global e Fixa) --- */
 #landscapeWarning {
     display: none;
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
+    position: fixed; /* Cobre a janela inteira do navegador de ponta a ponta */
+    top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(10, 10, 15, 0.98);
     color: #fff;
-    z-index: 1000;
+    z-index: 9999; /* Fica acima de tudo, inclusive menus */
     justify-content: center;
     align-items: center;
     text-align: center;
