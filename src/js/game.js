@@ -1,4 +1,3 @@
-// src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
 import { playSound, initAudio } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, CAPSULE_WEIGHTS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
@@ -55,9 +54,43 @@ export class Game {
         
         let menuEl = document.getElementById('menu');
         if (menuEl) menuEl.style.display = 'none';
+        let pauseEl = document.getElementById('pauseMenu');
+        if (pauseEl) pauseEl.style.display = 'none';
+        let overEl = document.getElementById('gameOverMenu');
+        if (overEl) overEl.style.display = 'none';
 
         this.initLevel(this.currentLevel);
         this.resetBall();
+    }
+
+    resumeGame() {
+        let pauseEl = document.getElementById('pauseMenu');
+        if (pauseEl) pauseEl.style.display = 'none';
+        this.gameRunning = true;
+    }
+
+    restartFromLevel1() {
+        this.currentLevel = 1;
+        this.startGame('medium');
+    }
+
+    quitToMainMenu() {
+        this.gameRunning = false;
+        document.getElementById('pauseMenu').style.display = 'none';
+        document.getElementById('gameOverMenu').style.display = 'none';
+        document.getElementById('winOverlay').style.display = 'none';
+        document.getElementById('menu').style.display = 'flex';
+        document.getElementById('selectLevelBtn').innerText = `Fase: ${this.currentLevel}`;
+        let highScoreEl = document.getElementById('menuHighScore');
+        if (highScoreEl) highScoreEl.innerText = `RECORDE: ${this.highScore}`;
+    }
+
+    continueGame() {
+        document.getElementById('gameOverMenu').style.display = 'none';
+        this.lives = 3;
+        this.gameRunning = true;
+        this.resetBall();
+        this.updateHUD();
     }
 
     openIosPicker() {
@@ -76,7 +109,6 @@ export class Game {
                 this.currentLevel = i;
                 document.querySelectorAll('.ios-wheel-item').forEach(el => el.classList.remove('selected'));
                 li.classList.add('selected');
-                document.getElementById('selectLevelBtn').innerText = `Fase: ${this.currentLevel}`;
             });
             
             wheelList.appendChild(li);
@@ -90,11 +122,12 @@ export class Game {
     }
 
     confirmIosPicker() {
+        const selectedLi = document.querySelector('.ios-wheel-item.selected');
+        if (selectedLi) {
+            this.currentLevel = parseInt(selectedLi.dataset.level);
+        }
         this.closeIosPicker();
         document.getElementById('selectLevelBtn').innerText = `Fase: ${this.currentLevel}`;
-        
-        let highScoreEl = document.getElementById('menuHighScore');
-        if (highScoreEl) highScoreEl.innerText = `RECORDE: ${this.highScore}`;
     }
 
     getDeterministicCapsule() {
@@ -250,14 +283,16 @@ export class Game {
                 [0,0,3,3,3,3,3,0,0]
             ];
         } else {
-            for (let r = 0; r < 5; r++) pattern.push([1,1,1,1,1,1,1,1,1]);
+            for (let r = 0; r < 6; r++) pattern.push([1,1,1,1,1,1,1,1,1]);
         }
 
         for (let r = 0; r < pattern.length; r++) {
             for (let c = 0; c < pattern[r].length; c++) {
                 let val = pattern[r][c];
                 if (val > 0) {
-                    let type = BRICK_TYPES[0];
+                    // Distribui cores coloridas por linha baseadas no config (BRICK_TYPES)
+                    let brickTypeIndex = r % BRICK_TYPES.length;
+                    let type = BRICK_TYPES[brickTypeIndex];
                     let hits = 1;
                     let color = type.color;
                     let points = type.points;
