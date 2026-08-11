@@ -107,7 +107,7 @@ button.btn-select { background: #3498db; color: #fff; }
     transform: scale(0.92);
 }
 
-/* Modal iOS Picker (Com rolagem por toque corrigida) */
+/* Modal iOS Picker com Rolagem Suave e Encaixe (Snap) */
 #iosPickerOverlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -154,12 +154,16 @@ button.btn-select { background: #3498db; color: #fff; }
     background: #fff;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    scroll-snap-type: y mandatory;
+    padding-top: 85px;
+    padding-bottom: 85px;
+    box-sizing: border-box;
 }
 
 .ios-wheel-highlight {
-    position: sticky;
+    position: absolute;
     top: 85px; 
+    left: 0; right: 0;
     height: 50px;
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
@@ -186,13 +190,13 @@ button.btn-select { background: #3498db; color: #fff; }
     color: #666;
     user-select: none;
     cursor: pointer;
+    scroll-snap-align: center;
 }
 
 .ios-wheel-item.selected {
     color: #000;
     font-weight: bold;
     font-size: 1.6rem;
-    background: rgba(52, 152, 219, 0.1);
 }
 
 #winOverlay {
