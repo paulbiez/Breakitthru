@@ -1,37 +1,38 @@
+// src/js/config.js
+
 export const TOTAL_LEVELS = 20;
 
-export const LEVEL_TEXT_COLORS = [
-    '#FFD700', '#00FFFF', '#FF69B4', '#FFFF00', '#00BFFF',
-    '#FFA500', '#00FF00', '#FFFFFF', '#FFD700', '#00FFFF',
-    '#FFFF00', '#00FF00', '#FFA500', '#00FFFF', '#FFD700',
-    '#FFFFFF', '#FF69B4', '#FFFF00', '#00FFFF', '#00FF00'
-];
-
-export const CAPSULE_WEIGHTS = [
-    { type: 'C', weight: 15 },
-    { type: 'E', weight: 15 },
-    { type: 'S', weight: 15 },
-    { type: 'H', weight: 15 },
-    { type: 'G', weight: 15 },
-    { type: 'D', weight: 15 },
-    { type: 'P', weight: 5 },
-    { type: 'B', weight: 5 }
-];
-
 export const BRICK_TYPES = [
-    { color: '#888888', points: 5,  weight: 25 },
-    { color: '#00008B', points: 10, weight: 20 },
-    { color: '#00FFFF', points: 15, weight: 15 },
-    { color: '#00FF00', points: 20, weight: 15 },
-    { color: '#FFFF00', points: 25, weight: 10 },
-    { color: '#FF8C00', points: 30, weight: 8  },
-    { color: '#FF0000', points: 35, weight: 5  },
-    { color: '#800088', points: 40, weight: 2  }
+    { color: '#FF5733', points: 10 }, // Laranja vibrante
+    { color: '#33FF57', points: 20 }, // Verde claro
+    { color: '#00FFFF', points: 30 }, // Ciano brilhante (alto contraste)
+    { color: '#F3FF33', points: 40 }, // Amarelo
+    { color: '#FF33F3', points: 50 }  // Rosa choque
+];
+
+// Pesos dos bônus
+export const CAPSULE_WEIGHTS = [
+    { type: 'C', weight: 15 }, // Cola na raquete
+    { type: 'E', weight: 15 }, // Expandir raquete
+    { type: 'S', weight: 10 }, // Slow (bola lenta)
+    { type: 'H', weight: 12 }, // Escudo Elétrico ('H')
+    { type: 'G', weight: 10 }, // Giga Ball
+    { type: 'D', weight: 15 }, // Multi-ball (Dividir)
+    { type: 'P', weight: 10 }, // Vida extra
+    { type: 'B', weight: 13 }  // Porta Warp
+];
+
+export const LEVEL_TEXT_COLORS = [
+    '#FFD700', '#00FFFF', '#FF69B4', '#00FF00', '#FF4500',
+    '#ADFF2F', '#1E90FF', '#FF1493', '#00FA9A', '#FFFF00',
+    '#FFD700', '#00FFFF', '#FF69B4', '#00FF00', '#FF4500',
+    '#ADFF2F', '#1E90FF', '#FF1493', '#00FA9A', '#FFFF00'
 ];
 
 export const LEVEL_BACKGROUNDS = [
-    { bg: '#030825', stroke: '#1a3299', hexFill: '#081763' },
-    // ... adicione o restante aqui ...
+    { bg: '#050b30', stroke: '#1a2b6c', hexFill: '#0a154a' },
+    { bg: '#2b0530', stroke: '#6c1a60', hexFill: '#4a0a40' },
+    { bg: '#05302b', stroke: '#1a6c56', hexFill: '#0a4a39' },
+    { bg: '#302b05', stroke: '#6c5c1a', hexFill: '#4a410a' },
+    { bg: '#200530', stroke: '#501a6c', hexFill: '#350a4a' }
 ];
-
-
