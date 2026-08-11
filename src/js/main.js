@@ -23,10 +23,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Função para tentar travar o celular na vertical (compatível com Android)
+    async function lockPortrait() {
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('portrait');
+            }
+        } catch (err) {
+            console.log("Bloqueio de orientação automático não suportado neste navegador.");
+        }
+    }
+
     // Botões de Dificuldade do Menu Principal
-    document.getElementById('btnEasy').addEventListener('click', () => game.startGame('easy'));
-    document.getElementById('btnMedium').addEventListener('click', () => game.startGame('medium'));
-    document.getElementById('btnHard').addEventListener('click', () => game.startGame('hard'));
+    document.getElementById('btnEasy').addEventListener('click', () => {
+        lockPortrait();
+        game.startGame('easy');
+    });
+    
+    document.getElementById('btnMedium').addEventListener('click', () => {
+        lockPortrait();
+        game.startGame('medium');
+    });
+    
+    document.getElementById('btnHard').addEventListener('click', () => {
+        lockPortrait();
+        game.startGame('hard');
+    });
 
     // Botão para abrir o seletor de fases usando o módulo
     document.getElementById('selectLevelBtn').addEventListener('click', () => {
