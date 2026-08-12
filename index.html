@@ -33,6 +33,49 @@
         <p id="menuHighScore" class="high-score" style="margin-bottom: 15px; font-weight: bold;">RECORDE: 0</p>
         <button id="btnStart" class="btn-continue">Começar Jogo</button>
         <button id="selectLevelBtn" class="btn-select">Selecionar Fase: 1</button>
+        <button id="btnSettings" class="btn-restart">Configurações</button>
+    </div>
+
+    <!-- Menu de Configurações Principal -->
+    <div id="settingsMenu" style="display: none;">
+        <h2 style="margin-bottom: 20px;">CONFIGURAÇÕES</h2>
+        <button id="btnSettingsPaddle" class="btn-select">Tamanho do Jogador</button>
+        <button id="btnSettingsBallSpeed" class="btn-select">Velocidade da Bola</button>
+        <button id="btnSettingsBallSize" class="btn-select">Tamanho da Bola</button>
+        <button id="btnSettingsCancel" class="btn-quit" style="margin-top: 30px;">Cancelar</button>
+    </div>
+
+    <!-- Submenu: Tamanho do Jogador -->
+    <div id="settingsPaddleMenu" style="display: none;">
+        <h2 style="margin-bottom: 15px;">TAMANHO DO JOGADOR</h2>
+        <button class="btn-paddle-size" data-size="small">Pequeno</button>
+        <button class="btn-paddle-size" data-size="medium">Médio</button>
+        <button class="btn-paddle-size" data-size="large">Grande</button>
+        <button id="btnPaddleBack" class="btn-quit" style="margin-top: 20px;">Voltar</button>
+        
+        <!-- Preview dinâmico da raquete em baixo da tela -->
+        <div class="paddle-preview-container">
+            <span style="font-size: 11px; color: #aaa; margin-bottom: 5px; display: block;">Pré-visualização da Raquete:</span>
+            <div id="previewPaddle"></div>
+        </div>
+    </div>
+
+    <!-- Submenu: Velocidade da Bola -->
+    <div id="settingsBallSpeedMenu" style="display: none;">
+        <h2 style="margin-bottom: 20px;">VELOCIDADE DA BOLA</h2>
+        <button class="btn-ball-speed" data-speed="slow">Lenta</button>
+        <button class="btn-ball-speed" data-speed="normal">Normal</button>
+        <button class="btn-ball-speed" data-speed="fast">Rápida</button>
+        <button id="btnSpeedBack" class="btn-quit" style="margin-top: 30px;">Voltar</button>
+    </div>
+
+    <!-- Submenu: Tamanho da Bola -->
+    <div id="settingsBallSizeMenu" style="display: none;">
+        <h2 style="margin-bottom: 20px;">TAMANHO DA BOLA</h2>
+        <button class="btn-ball-size" data-size="small">Pequena</button>
+        <button class="btn-ball-size" data-size="normal">Normal</button>
+        <button class="btn-ball-size" data-size="large">Grande</button>
+        <button id="btnSizeBack" class="btn-quit" style="margin-top: 30px;">Voltar</button>
     </div>
 
     <!-- Menu de Pausa / Desistência -->
