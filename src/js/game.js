@@ -49,7 +49,7 @@ export class Game {
         this.initLevel(1);
     }
 
-    startGame(difficulty = 'easy') {
+    startGame() {
         initAudio();
         this.gameRunning = true;
         this.score = 0;
@@ -73,7 +73,7 @@ export class Game {
 
     restartFromLevel1() {
         this.currentLevel = 1;
-        this.startGame('easy');
+        this.startGame();
     }
 
     quitToMainMenu() {
@@ -451,8 +451,8 @@ export class Game {
             if (ball.stuck) {
                 ball.stuck = false;
                 let randomDir = Math.random() > 0.5 ? 1 : -1;
-                ball.dx = randomDir * (2 + Math.random() * 2);
-                ball.dy = -3.5;
+                ball.dx = randomDir * (3 + Math.random() * 2);
+                ball.dy = -5.0; // Velocidade aumentada
             }
         });
     }
@@ -464,7 +464,7 @@ export class Game {
                 newBalls.push({
                     x: b.x, y: b.y,
                     dx: (Math.random() - 0.5) * 6,
-                    dy: -Math.abs(b.dy || 3.5),
+                    dy: -Math.abs(b.dy || 5.0),
                     radius: b.radius || 6, stuck: false
                 });
             }

@@ -14,7 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${level}`;
     });
 
-    initInputs(canvas, game.paddle, { onLaunch: () => game.launchBalls() });
+    // Inicializa os controles bloqueando o input durante a introdução da fase
+    initInputs(canvas, game.paddle, 
+        { onLaunch: () => game.launchBalls() }, 
+        () => game.levelIntroActive 
+    );
 
     window.addEventListener("orientationchange", () => {
         setTimeout(() => {
@@ -30,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btnStart').addEventListener('click', () => {
-        game.startGame('easy');
+        game.startGame();
     });
 
     document.getElementById('selectLevelBtn').addEventListener('click', () => {
