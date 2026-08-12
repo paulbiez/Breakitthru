@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePreviewPaddle(sizeOption) {
         let preview = document.getElementById('previewPaddle');
+        if (!preview) return;
         let scale = 1.35;
         if (sizeOption === 'small') scale = 0.7;
         if (sizeOption === 'medium') scale = 1.0;
@@ -61,11 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePreviewBall(sizeOption) {
         let preview = document.getElementById('previewBall');
+        if (!preview) return;
         let radius = 6;
         if (sizeOption === 'small') radius = 4.5;
         if (sizeOption === 'normal') radius = 6;
         if (sizeOption === 'large') radius = 8;
-        let diameter = radius * 2;
+        let diameter = (radius * 2) * 2; // Dobro para visualização nítida no preview
         preview.style.width = diameter + 'px';
         preview.style.height = diameter + 'px';
     }
@@ -80,28 +82,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Abrir Configurações (Faz backup do estado atual)
+    // Abrir Configurações
     document.getElementById('btnSettings').addEventListener('click', () => {
         settingsBackup = game.backupSettings();
         hideAllMenus();
         document.getElementById('settingsMenu').style.display = 'flex';
     });
 
-    // Salvar alterações (Confirma mudanças e descarta backup)
-    document.getElementById('btnSettingsSave').addEventListener('click', () => {
-        settingsBackup = null;
-        hideAllMenus();
-        document.getElementById('menu').style.display = 'flex';
-    });
+    // Salvar alterações (Compatível com Firefox)
+    const saveBtn = document.getElementById('btnSettingsSave');
+    if (saveBtn) {
+        saveBtn.onclick = () => {
+            settingsBackup = null;
+            hideAllMenus();
+            document.getElementById('menu').style.display = 'flex';
+        };
+    }
 
-    // Cancelar Configurações (Restaura o backup anterior e volta ao menu)
-    document.getElementById('btnSettingsCancel').addEventListener('click', () => {
-        if (settingsBackup) {
-            game.restoreSettings(settingsBackup);
-        }
-        hideAllMenus();
-        document.getElementById('menu').style.display = 'flex';
-    });
+    // Cancelar Configurações
+    const cancelBtn = document.getElementById('btnSettingsCancel');
+    if (cancelBtn) {
+        cancelBtn.onclick = () => {
+            if (settingsBackup) {
+                game.restoreSettings(settingsBackup);
+            }
+            hideAllMenus();
+            document.getElementById('menu').style.display = 'flex';
+        };
+    }
 
     // Submenu: Tamanho do Jogador
     document.getElementById('btnSettingsPaddle').addEventListener('click', () => {

@@ -1,11 +1,12 @@
 // src/js/input.js
 
-export function initInputs(canvas, paddle, callbacks) {
+export function initInputs(canvas, paddle, callbacks, shouldIgnoreInput) {
     function handleMove(clientX) {
+        if (shouldIgnoreInput && shouldIgnoreInput()) return;
+        
         let rect = canvas.getBoundingClientRect();
         let mouseX = clientX - rect.left;
         
-        // Fator de proporção exato entre a largura lógica interna e a largura real na tela
         let scaleX = canvas.width / rect.width;
         let targetX = (mouseX * scaleX) - (paddle.width / 2);
         
@@ -19,6 +20,7 @@ export function initInputs(canvas, paddle, callbacks) {
 
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
+        if (shouldIgnoreInput && shouldIgnoreInput()) return;
         if (e.touches.length > 0) {
             handleMove(e.touches[0].clientX);
         }
@@ -26,6 +28,7 @@ export function initInputs(canvas, paddle, callbacks) {
 
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        if (shouldIgnoreInput && shouldIgnoreInput()) return;
         if (callbacks.onLaunch) callbacks.onLaunch();
         if (e.touches.length > 0) {
             handleMove(e.touches[0].clientX);
@@ -33,6 +36,7 @@ export function initInputs(canvas, paddle, callbacks) {
     }, { passive: false });
 
     canvas.addEventListener('mousemove', (e) => {
+        if (shouldIgnoreInput && shouldIgnoreInput()) return;
         handleMove(e.clientX);
     });
 }
