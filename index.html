@@ -42,7 +42,8 @@
         <button id="btnSettingsPaddle" class="btn-select">Tamanho do Jogador</button>
         <button id="btnSettingsBallSpeed" class="btn-select">Velocidade da Bola</button>
         <button id="btnSettingsBallSize" class="btn-select">Tamanho da Bola</button>
-        <button id="btnSettingsCancel" class="btn-quit" style="margin-top: 30px;">Cancelar</button>
+        <button id="btnSettingsSave" class="btn-continue" style="margin-top: 20px;">Salvar alterações</button>
+        <button id="btnSettingsCancel" class="btn-quit">Cancelar</button>
     </div>
 
     <!-- Submenu: Tamanho do Jogador -->
@@ -71,11 +72,17 @@
 
     <!-- Submenu: Tamanho da Bola -->
     <div id="settingsBallSizeMenu" style="display: none;">
-        <h2 style="margin-bottom: 20px;">TAMANHO DA BOLA</h2>
+        <h2 style="margin-bottom: 15px;">TAMANHO DA BOLA</h2>
         <button class="btn-ball-size" data-size="small">Pequena</button>
         <button class="btn-ball-size" data-size="normal">Normal</button>
         <button class="btn-ball-size" data-size="large">Grande</button>
-        <button id="btnSizeBack" class="btn-quit" style="margin-top: 30px;">Voltar</button>
+        <button id="btnSizeBack" class="btn-quit" style="margin-top: 20px;">Voltar</button>
+
+        <!-- Preview dinâmico da bola em baixo da tela -->
+        <div class="ball-preview-container">
+            <span style="font-size: 11px; color: #aaa; margin-bottom: 5px; display: block;">Pré-visualização da Bola:</span>
+            <div id="previewBall"></div>
+        </div>
     </div>
 
     <!-- Menu de Pausa / Desistência -->
