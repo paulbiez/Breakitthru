@@ -1,6 +1,6 @@
 // src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
-import { playSound, initAudio } from './audio.js';
+import { playSound, initAudio, playMp3 } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 
 export class Game {
@@ -40,6 +40,7 @@ export class Game {
 
         this.levelIntroActive = false;
         this.levelIntroTimer = 0;
+        this.prepareActive = false; // Estado para a mensagem "PREPARE-SE, JOGADOR"
         this.warpAnimationActive = false;
         this.warpLaserTimer = 0;
         this.gigaBallTimeout = null;
@@ -58,36 +59,30 @@ export class Game {
 
     // --- LÓGICA SECRETA DE DIFICULDADE (BASEADA NAS CONFIGURAÇÕES) ---
     calculateSecretDifficulty() {
-        // 1. Mapeia Raquete
         let paddleDiff = 'medium';
         if (this.paddleSizeOption === 'small') paddleDiff = 'hard';
         else if (this.paddleSizeOption === 'medium') paddleDiff = 'medium';
         else if (this.paddleSizeOption === 'large') paddleDiff = 'easy';
 
-        // 2. Mapeia Velocidade da Bola
         let speedDiff = 'medium';
         if (this.ballSpeedOption === 'slow') speedDiff = 'easy';
         else if (this.ballSpeedOption === 'normal') speedDiff = 'medium';
         else if (this.ballSpeedOption === 'fast') speedDiff = 'hard';
 
-        // 3. Mapeia Tamanho da Bola
         let sizeDiff = 'medium';
         if (this.ballSizeOption === 'small') sizeDiff = 'hard';
         else if (this.ballSizeOption === 'normal') sizeDiff = 'medium';
         else if (this.ballSizeOption === 'large') sizeDiff = 'easy';
 
-        // Conta os votos
         let counts = { easy: 0, medium: 0, hard: 0 };
         counts[paddleDiff]++;
         counts[speedDiff]++;
         counts[sizeDiff]++;
 
-        // Verifica maioria (>= 2)
         if (counts.easy >= 2) return 'easy';
         if (counts.hard >= 2) return 'hard';
         if (counts.medium >= 2) return 'medium';
 
-        // Em caso de empate (1, 1, 1), retorna 'medium'
         return 'medium';
     }
     // -------------------------------------------------------------
@@ -201,7 +196,6 @@ export class Game {
     }
 
     getDeterministicCapsule() {
-        // Pega a dificuldade calculada secretamente pelas configurações atuais
         let currentDiff = this.calculateSecretDifficulty();
         const weights = DIFFICULTY_CONFIGS[currentDiff].weights;
 
@@ -525,7 +519,6 @@ export class Game {
             }
         }
 
-        // Pega a taxa de spawn baseada na dificuldade secreta calculada
         let currentDiff = this.calculateSecretDifficulty();
         let rate = DIFFICULTY_CONFIGS[currentDiff].spawnRate;
         let activeDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible);
@@ -553,7 +546,11 @@ export class Game {
             dx: 0, dy: 0, radius: radius, stuck: true
         }];
 
-        this.autoLaunchTimer = setTimeout(() => { this.launchBalls(); }, 3000);
+        this.prepareActive = true;
+        this.autoLaunchTimer = setTimeout(() => { 
+            this.prepareActive = false;
+            this.launchBalls(); 
+        }, 2000);
     }
 
     launchBalls() {
@@ -699,14 +696,7 @@ export class Game {
     }
 
     update() {
-        if (!this.gameRunning || this.victoryExplosionActive) return;
-
-        if (this.levelIntroActive) {
-            this.levelIntroTimer--;
-            if (this.levelIntroTimer <= 0) this.levelIntroActive = false;
-            this.draw();
-            return;
-        }
+        if (!this.gameRunning || this.prepareActive || this.levelIntroActive || this.victoryExplosionActive) return;
 
         if (this.warpAnimationActive) {
             this.warpLaserTimer--;
@@ -807,14 +797,14 @@ export class Game {
         }
 
         if (this.balls.length === 0) {
-            playSound('lose');
+            playMp3('src/assets/scream1.mp3'); // Toca o MP3 personalizado de perda de vida
             this.lives--;
             this.updateHUD();
 
             if (this.lives <= 0) {
                 this.gameRunning = false;
                 let gTitle = document.getElementById('gameOverTitle');
-                if (gTitle) gTitle.innerText = "FIM DE JOGO";
+                if (gTitle) gTitle.innerText = "FIM DO JOGO";
                 let fScore = document.getElementById('finalScore');
                 if (fScore) fScore.innerText = `Pontos Totais: ${this.score}`;
                 let gMenu = document.getElementById('gameOverMenu');
@@ -1003,6 +993,21 @@ export class Game {
             this.ctx.shadowBlur = 12;
             this.ctx.shadowColor = this.ctx.fillStyle;
             this.ctx.fillText(`FASE ${this.currentLevel}`, this.canvas.width / 2, this.canvas.height / 2 + 10);
+
+            this.ctx.textAlign = 'left';
+            this.ctx.shadowBlur = 0;
+        }
+
+        if (this.prepareActive && !this.levelIntroActive) {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            this.ctx.fillRect(0, this.canvas.height / 2 - 45, this.canvas.width, 90);
+
+            this.ctx.font = '900 22px -apple-system, BlinkMacSystemFont, Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.shadowBlur = 12;
+            this.ctx.shadowColor = this.ctx.fillStyle;
+            this.ctx.fillText("PREPARE-SE, JOGADOR", this.canvas.width / 2, this.canvas.height / 2 + 8);
 
             this.ctx.textAlign = 'left';
             this.ctx.shadowBlur = 0;
