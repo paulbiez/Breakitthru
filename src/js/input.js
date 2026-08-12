@@ -19,16 +19,16 @@ export function initInputs(canvas, paddle, callbacks, shouldIgnoreInput) {
     }
 
     canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
         if (shouldIgnoreInput && shouldIgnoreInput()) return;
+        e.preventDefault();
         if (e.touches.length > 0) {
             handleMove(e.touches[0].clientX);
         }
     }, { passive: false });
 
     canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
         if (shouldIgnoreInput && shouldIgnoreInput()) return;
+        e.preventDefault();
         if (callbacks.onLaunch) callbacks.onLaunch();
         if (e.touches.length > 0) {
             handleMove(e.touches[0].clientX);

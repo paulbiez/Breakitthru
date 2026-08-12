@@ -3,24 +3,54 @@
 export const TOTAL_LEVELS = 20;
 
 export const BRICK_TYPES = [
-    { color: '#FF5733', points: 10 }, // Laranja vibrante
-    { color: '#33FF57', points: 20 }, // Verde claro
-    { color: '#00FFFF', points: 30 }, // Ciano brilhante (alto contraste)
-    { color: '#F3FF33', points: 40 }, // Amarelo
-    { color: '#FF33F3', points: 50 }  // Rosa choque
+    { color: '#FF5733', points: 10 },
+    { color: '#33FF57', points: 20 },
+    { color: '#00FFFF', points: 30 },
+    { color: '#F3FF33', points: 40 },
+    { color: '#FF33F3', points: 50 }
 ];
 
-// Pesos dos bônus
-export const CAPSULE_WEIGHTS = [
-    { type: 'C', weight: 15 }, // Cola na raquete
-    { type: 'E', weight: 15 }, // Expandir raquete
-    { type: 'S', weight: 10 }, // Slow (bola lenta)
-    { type: 'H', weight: 12 }, // Escudo Elétrico ('H')
-    { type: 'G', weight: 10 }, // Giga Ball
-    { type: 'D', weight: 15 }, // Multi-ball (Dividir)
-    { type: 'P', weight: 10 }, // Vida extra
-    { type: 'B', weight: 13 }  // Porta Warp
-];
+export const DIFFICULTY_CONFIGS = {
+    easy: {
+        spawnRate: 0.20, // 20%
+        weights: [
+            { type: 'C', weight: 15 },
+            { type: 'E', weight: 15 },
+            { type: 'S', weight: 10 },
+            { type: 'H', weight: 12 },
+            { type: 'G', weight: 10 },
+            { type: 'D', weight: 15 },
+            { type: 'P', weight: 10 },
+            { type: 'B', weight: 13 }
+        ]
+    },
+    medium: {
+        spawnRate: 0.08, // 8%
+        weights: [
+            { type: 'C', weight: 40 },
+            { type: 'E', weight: 30 },
+            { type: 'D', weight: 18 },
+            { type: 'B', weight: 3 },
+            { type: 'H', weight: 5 },
+            { type: 'S', weight: 2 },
+            { type: 'G', weight: 1 },
+            { type: 'P', weight: 1 }
+        ]
+    },
+    hard: {
+        spawnRate: 0.03, // 3%
+        weights: [
+            { type: 'C', weight: 50 },
+            { type: 'E', weight: 10 },
+            { type: 'D', weight: 35 },
+            { type: 'B', weight: 1 },
+            { type: 'H', weight: 1 },
+            { type: 'S', weight: 1 },
+            { type: 'G', weight: 1 },
+            { type: 'P', weight: 1 }
+        ]
+    }
+};
 
 export const LEVEL_TEXT_COLORS = [
     '#FFD700', '#00FFFF', '#FF69B4', '#00FF00', '#FF4500',

@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sizeOption === 'small') radius = 4.5;
         if (sizeOption === 'normal') radius = 6;
         if (sizeOption === 'large') radius = 8;
-        let diameter = (radius * 2) * 2; // Dobro para visualização nítida no preview
+        let diameter = (radius * 2) * 2;
         preview.style.width = diameter + 'px';
         preview.style.height = diameter + 'px';
     }
@@ -82,14 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Abrir Configurações
     document.getElementById('btnSettings').addEventListener('click', () => {
         settingsBackup = game.backupSettings();
         hideAllMenus();
         document.getElementById('settingsMenu').style.display = 'flex';
     });
 
-    // Salvar alterações (Compatível com Firefox)
     const saveBtn = document.getElementById('btnSettingsSave');
     if (saveBtn) {
         saveBtn.onclick = () => {
@@ -99,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Cancelar Configurações
     const cancelBtn = document.getElementById('btnSettingsCancel');
     if (cancelBtn) {
         cancelBtn.onclick = () => {
@@ -174,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
             highlightActiveOptions('btn-ball-size', size, 'data-size');
         });
     });
-    // -----------------------------------
 
     document.getElementById('quitBtn').addEventListener('click', () => {
         game.gameRunning = false;
@@ -182,10 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelector('#pauseMenu .btn-continue').addEventListener('click', () => game.resumeGame());
-    document.querySelector('#pauseMenu .btn-restart').addEventListener('click', () => game.restartFromLevel1());
     document.querySelector('#pauseMenu .btn-quit').addEventListener('click', () => game.quitToMainMenu());
-
-    document.querySelector('#gameOverMenu .btn-continue').addEventListener('click', () => game.continueGame());
     document.querySelector('#gameOverMenu .btn-quit').addEventListener('click', () => game.quitToMainMenu());
     document.querySelector('#winOverlay .btn-quit').addEventListener('click', () => game.quitToMainMenu());
 

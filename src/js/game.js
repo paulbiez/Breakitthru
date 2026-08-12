@@ -1,7 +1,7 @@
 // src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
 import { playSound, initAudio } from './audio.js';
-import { TOTAL_LEVELS, BRICK_TYPES, CAPSULE_WEIGHTS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
+import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 
 export class Game {
     constructor(canvas) {
@@ -26,10 +26,13 @@ export class Game {
         this.currentLevel = 1;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore')) || 0;
 
-        // Configurações personalizáveis
-        this.paddleSizeOption = 'large'; // 'small', 'medium', 'large' (default = grande/atual)
-        this.ballSpeedOption = 'fast';   // 'slow', 'normal', 'fast' (default = rápida/atual)
-        this.ballSizeOption = 'normal';  // 'small', 'normal', 'large' (default = normal/atual)
+        // Dificuldade secreta interna ('easy', 'medium', 'hard')
+        this.difficulty = 'easy'; 
+
+        // Configurações personalizáveis de customização
+        this.paddleSizeOption = 'large'; 
+        this.ballSpeedOption = 'fast';   
+        this.ballSizeOption = 'normal';  
 
         this.gameRunning = false;
         this.victoryExplosionActive = false;
@@ -56,7 +59,6 @@ export class Game {
         this.applyBallSizeOption();
     }
 
-    // Métodos de Configurações
     setPaddleSize(option) {
         this.paddleSizeOption = option;
         this.applyPaddleSizeOption();
@@ -101,7 +103,8 @@ export class Game {
         return {
             paddleSize: this.paddleSizeOption,
             ballSpeed: this.ballSpeedOption,
-            ballSize: this.ballSizeOption
+            ballSize: this.ballSizeOption,
+            difficulty: this.difficulty
         };
     }
 
@@ -109,8 +112,8 @@ export class Game {
         this.setPaddleSize(backup.paddleSize);
         this.setBallSpeed(backup.ballSpeed);
         this.setBallSize(backup.ballSize);
+        this.difficulty = backup.difficulty;
     }
-    // -----------------------------------
 
     startGame() {
         initAudio();
@@ -167,11 +170,12 @@ export class Game {
     }
 
     getDeterministicCapsule() {
-        let totalWeight = CAPSULE_WEIGHTS.reduce((acc, c) => acc + c.weight, 0);
+        const weights = DIFFICULTY_CONFIGS[this.difficulty].weights;
+        let totalWeight = weights.reduce((acc, c) => acc + c.weight, 0);
         let seed = (Math.abs(this.score) % 10) + Math.floor(Math.abs(this.paddle.x));
         let value = seed % totalWeight;
 
-        for (let c of CAPSULE_WEIGHTS) {
+        for (let c of weights) {
             if (value < c.weight) return c.type;
             value -= c.weight;
         }
@@ -487,8 +491,9 @@ export class Game {
             }
         }
 
+        let rate = DIFFICULTY_CONFIGS[this.difficulty].spawnRate;
         let activeDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible);
-        let capsuleCount = Math.floor(activeDestructibleBricks.length * 0.20);
+        let capsuleCount = Math.floor(activeDestructibleBricks.length * rate);
         let shuffled = [...activeDestructibleBricks].sort(() => Math.random() - 0.5);
         for (let i = 0; i < capsuleCount && i < shuffled.length; i++) {
             shuffled[i].hasCapsule = true;
@@ -521,13 +526,13 @@ export class Game {
         let initialDy = -5.0;
         let initialDxRange = 3;
         if (this.ballSpeedOption === 'slow') {
-            initialDy = -2.5; // lenta (mínimo abaixo da normal)
+            initialDy = -2.5; 
             initialDxRange = 2;
         } else if (this.ballSpeedOption === 'normal') {
-            initialDy = -3.5; // normal (velocidade antes da mudança)
+            initialDy = -3.5; 
             initialDxRange = 2.5;
         } else if (this.ballSpeedOption === 'fast') {
-            initialDy = -5.0; // rápida (atual)
+            initialDy = -5.0; 
             initialDxRange = 3;
         }
 
