@@ -15,9 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${level}`;
     });
 
+    // CORREÇÃO: Bloqueia o input da raquete se a fase estiver iniciando OU se estiver no "Prepare-se"
     initInputs(canvas, game.paddle, 
         { onLaunch: () => game.launchBalls() }, 
-        () => game.levelIntroActive 
+        () => game.levelIntroActive || game.prepareActive 
     );
 
     window.addEventListener("orientationchange", () => {
@@ -178,7 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelector('#pauseMenu .btn-continue').addEventListener('click', () => game.resumeGame());
+    document.querySelector('#pauseMenu .btn-restart').addEventListener('click', () => game.restartFromLevel1());
     document.querySelector('#pauseMenu .btn-quit').addEventListener('click', () => game.quitToMainMenu());
+
+    document.querySelector('#gameOverMenu .btn-continue').addEventListener('click', () => game.continueGame());
     document.querySelector('#gameOverMenu .btn-quit').addEventListener('click', () => game.quitToMainMenu());
     document.querySelector('#winOverlay .btn-quit').addEventListener('click', () => game.quitToMainMenu());
 
