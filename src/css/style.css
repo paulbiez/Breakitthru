@@ -79,7 +79,7 @@ canvas {
     box-shadow: 0 0 12px rgba(255,255,255,0.6);
 }
 
-/* Container de pré-visualização da bola nas configurações */
+/* Container de pré-visualização da bola nas configurações (Compatível com Firefox) */
 .ball-preview-container {
     position: absolute;
     bottom: 25px;
@@ -94,8 +94,9 @@ canvas {
 }
 
 #previewBall {
-    background: #ffffff;
+    background-color: #ffffff !important;
     border-radius: 50%;
+    display: inline-block;
     transition: width 0.15s ease-out, height 0.15s ease-out;
     box-shadow: 0 0 12px rgba(255,255,255,0.6);
 }
