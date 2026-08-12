@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${level}`;
     });
 
-    // CORREÇÃO: Bloqueia o input da raquete se a fase estiver iniciando OU se estiver no "Prepare-se"
+    // Bloqueio rigoroso de Input: ignora movimentos caso esteja na Intro ou no Prepare-se
     initInputs(canvas, game.paddle, 
         { onLaunch: () => game.launchBalls() }, 
         () => game.levelIntroActive || game.prepareActive 

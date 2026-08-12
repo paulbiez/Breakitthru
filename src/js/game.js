@@ -26,7 +26,7 @@ export class Game {
         this.currentLevel = 1;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore')) || 0;
 
-        // Configurações personalizáveis (Lógica Secreta)
+        // Configurações e Dificuldade
         this.paddleSizeOption = 'large'; 
         this.ballSpeedOption = 'fast';   
         this.ballSizeOption = 'normal';  
@@ -38,13 +38,14 @@ export class Game {
         this.electricShieldActive = false;
         this.shieldY = 580;
 
+        // Controle Seguro de Timers baseados em Frames (60 fps = 1 seg)
         this.levelIntroActive = false;
         this.levelIntroTimer = 0;
         this.prepareActive = false; 
+        this.prepareTimer = 0;
         this.warpAnimationActive = false;
         this.warpLaserTimer = 0;
-        this.gigaBallTimeout = null;
-        this.autoLaunchTimer = null;
+        this.gigaBallTimer = 0;
 
         this.hexPattern = null;
         this.brickCols = 9;
@@ -57,7 +58,6 @@ export class Game {
         this.applyBallSizeOption();
     }
 
-    // --- LÓGICA SECRETA DE DIFICULDADE ---
     calculateSecretDifficulty() {
         let paddleDiff = 'medium';
         if (this.paddleSizeOption === 'small') paddleDiff = 'hard';
@@ -72,19 +72,16 @@ export class Game {
         else if (this.ballSizeOption === 'large') sizeDiff = 'easy';
 
         let counts = { easy: 0, medium: 0, hard: 0 };
-        counts[paddleDiff]++;
-        counts[speedDiff]++;
-        counts[sizeDiff]++;
+        counts[paddleDiff]++; counts[speedDiff]++; counts[sizeDiff]++;
 
         if (counts.easy >= 2) return 'easy';
         if (counts.hard >= 2) return 'hard';
-        return 'medium'; // Em caso de empate ou maioria medium
+        return 'medium'; 
     }
 
-    setPaddleSize(option) {
-        this.paddleSizeOption = option;
-        this.applyPaddleSizeOption();
-    }
+    setPaddleSize(option) { this.paddleSizeOption = option; this.applyPaddleSizeOption(); }
+    setBallSpeed(option) { this.ballSpeedOption = option; }
+    setBallSize(option) { this.ballSizeOption = option; this.applyBallSizeOption(); }
 
     applyPaddleSizeOption() {
         let scale = 1.35;
@@ -101,39 +98,16 @@ export class Game {
         }
     }
 
-    setBallSpeed(option) {
-        this.ballSpeedOption = option;
-    }
-
-    setBallSize(option) {
-        this.ballSizeOption = option;
-        this.applyBallSizeOption();
-    }
-
     applyBallSizeOption() {
         let radius = 6;
         if (this.ballSizeOption === 'small') radius = 4.5;
         if (this.ballSizeOption === 'normal') radius = 6;
         if (this.ballSizeOption === 'large') radius = 8;
-
-        this.balls.forEach(ball => {
-            ball.radius = radius;
-        });
+        this.balls.forEach(ball => { ball.radius = radius; });
     }
 
-    backupSettings() {
-        return {
-            paddleSize: this.paddleSizeOption,
-            ballSpeed: this.ballSpeedOption,
-            ballSize: this.ballSizeOption
-        };
-    }
-
-    restoreSettings(backup) {
-        this.setPaddleSize(backup.paddleSize);
-        this.setBallSpeed(backup.ballSpeed);
-        this.setBallSize(backup.ballSize);
-    }
+    backupSettings() { return { paddleSize: this.paddleSizeOption, ballSpeed: this.ballSpeedOption, ballSize: this.ballSizeOption }; }
+    restoreSettings(backup) { this.setPaddleSize(backup.paddleSize); this.setBallSpeed(backup.ballSpeed); this.setBallSize(backup.ballSize); }
 
     startGame() {
         initAudio();
@@ -144,7 +118,7 @@ export class Game {
         document.querySelectorAll('#menu, #settingsMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay').forEach(el => el.style.display = 'none');
 
         this.initLevel(this.currentLevel);
-        this.resetBall();
+        this.resetBall('intro'); // Chama como INTRODUÇÃO DA FASE
     }
 
     resumeGame() {
@@ -170,22 +144,17 @@ export class Game {
         document.getElementById('gameOverMenu').style.display = 'none';
         this.lives = 3;
         this.gameRunning = true;
-        this.resetBall();
+        this.resetBall('respawn'); // Chama como PREPARAÇÃO (RESPAWN)
         this.updateHUD();
     }
 
     getDeterministicCapsule() {
         let currentDiff = this.calculateSecretDifficulty();
         const weights = DIFFICULTY_CONFIGS[currentDiff].weights;
-
         let totalWeight = weights.reduce((acc, c) => acc + c.weight, 0);
         let seed = (Math.abs(this.score) % 10) + Math.floor(Math.abs(this.paddle.x));
         let value = seed % totalWeight;
-
-        for (let c of weights) {
-            if (value < c.weight) return c.type;
-            value -= c.weight;
-        }
+        for (let c of weights) { if (value < c.weight) return c.type; value -= c.weight; }
         return 'C';
     }
 
@@ -195,25 +164,17 @@ export class Game {
         this.paddle.glue = false;
         this.electricShieldActive = false;
         this.applyBallSizeOption();
-
-        if (this.gigaBallTimeout) {
-            clearTimeout(this.gigaBallTimeout);
-            this.gigaBallTimeout = null;
-        }
+        this.gigaBallTimer = 0;
     }
 
     generateLevelPattern(level, customColors = null) {
         let colors = customColors || LEVEL_BACKGROUNDS[(level - 1) % LEVEL_BACKGROUNDS.length];
         let patternCanvas = document.createElement('canvas');
         let pCtx = patternCanvas.getContext('2d');
-        patternCanvas.width = 16;
-        patternCanvas.height = 28;
+        patternCanvas.width = 16; patternCanvas.height = 28;
 
-        pCtx.fillStyle = colors.bg;
-        pCtx.fillRect(0, 0, 16, 28);
-        pCtx.strokeStyle = colors.stroke;
-        pCtx.lineWidth = 1;
-        pCtx.fillStyle = colors.hexFill;
+        pCtx.fillStyle = colors.bg; pCtx.fillRect(0, 0, 16, 28);
+        pCtx.strokeStyle = colors.stroke; pCtx.lineWidth = 1; pCtx.fillStyle = colors.hexFill;
 
         for (let y = -7; y < 35; y += 14) {
             for (let x = -8; x < 24; x += 16) {
@@ -223,12 +184,9 @@ export class Game {
                     let angle = (Math.PI / 3) * i;
                     let hx = (x + offX) + 6 * Math.cos(angle);
                     let hy = y + 6 * Math.sin(angle);
-                    if (i === 0) pCtx.moveTo(hx, hy);
-                    else pCtx.lineTo(hx, hy);
+                    if (i === 0) pCtx.moveTo(hx, hy); else pCtx.lineTo(hx, hy);
                 }
-                pCtx.closePath();
-                pCtx.fill();
-                pCtx.stroke();
+                pCtx.closePath(); pCtx.fill(); pCtx.stroke();
             }
         }
         this.hexPattern = this.ctx.createPattern(patternCanvas, 'repeat');
@@ -236,15 +194,8 @@ export class Game {
 
     drawRoundedRect(x, y, w, h, radius) {
         this.ctx.beginPath();
-        if (this.ctx.roundRect) {
-            this.ctx.roundRect(x, y, w, h, radius);
-        } else {
-            this.ctx.moveTo(x + radius, y);
-            this.ctx.arcTo(x + w, y, x + w, y + h, radius);
-            this.ctx.arcTo(x + w, y + h, x, y + h, radius);
-            this.ctx.arcTo(x, y + h, x, y, radius);
-            this.ctx.arcTo(x, y, x + w, y, radius);
-        }
+        if (this.ctx.roundRect) { this.ctx.roundRect(x, y, w, h, radius); } 
+        else { this.ctx.moveTo(x + radius, y); this.ctx.arcTo(x + w, y, x + w, y + h, radius); this.ctx.arcTo(x + w, y + h, x, y + h, radius); this.ctx.arcTo(x, y + h, x, y, radius); this.ctx.arcTo(x, y, x + w, y, radius); }
         this.ctx.fill();
     }
 
@@ -257,9 +208,6 @@ export class Game {
         this.warpAnimationActive = false;
 
         this.generateLevelPattern(level);
-
-        this.levelIntroActive = true;
-        this.levelIntroTimer = 120; // Aproximadamente 2 segundos a 60 FPS
         playSound('introJingle');
 
         const startX = (this.canvas.width - (this.brickCols * (this.brickW + this.padding))) / 2;
@@ -267,189 +215,83 @@ export class Game {
 
         if (level === 1) {
             pattern = [
-                [1,1,1,1,1,1,1,1,1],
-                [1,1,1,1,1,1,1,1,1],
-                [1,1,1,1,1,1,1,1,1],
-                [1,1,1,1,1,1,1,1,1],
-                [1,1,1,1,1,1,1,1,1]
+                [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1]
             ];
         } else if (level === 2) {
             pattern = [
-                [1,1,1, 0, 1,0,0,0,1],
-                [1,0,0, 0, 1,1,0,1,1],
-                [1,0,0, 0, 1,0,1,0,1],
-                [1,0,0, 0, 1,0,1,0,1],
-                [1,0,0, 0, 1,0,0,0,1],
-                [1,0,0, 0, 1,0,0,0,1],
-                [1,1,1, 0, 1,0,0,0,1]
+                [1,1,1, 0, 1,0,0,0,1], [1,0,0, 0, 1,1,0,1,1], [1,0,0, 0, 1,0,1,0,1], [1,0,0, 0, 1,0,1,0,1], [1,0,0, 0, 1,0,0,0,1], [1,0,0, 0, 1,0,0,0,1], [1,1,1, 0, 1,0,0,0,1]
             ];
         } else if (level === 3) {
             pattern = [
-                [0,1,1,1,1,1,1,0,0],
-                [1,1,0,0,0,0,0,0,0],
-                [1,0,0,0,0,0,0,0,0],
-                [1,0,0,0,0,0,0,0,0],
-                [1,1,0,0,0,0,0,0,0],
-                [0,1,1,1,1,1,1,0,0]
+                [0,1,1,1,1,1,1,0,0], [1,1,0,0,0,0,0,0,0], [1,0,0,0,0,0,0,0,0], [1,0,0,0,0,0,0,0,0], [1,1,0,0,0,0,0,0,0], [0,1,1,1,1,1,1,0,0]
             ];
         } else if (level === 4) {
             pattern = [
-                [1,0,0,0,0,0,0,0,1],
-                [1,1,0,0,0,0,0,1,1],
-                [1,0,1,0,0,0,1,0,1],
-                [1,0,0,1,0,1,0,0,1],
-                [1,0,0,0,1,0,0,0,1],
-                [1,0,0,0,0,0,0,0,1]
+                [1,0,0,0,0,0,0,0,1], [1,1,0,0,0,0,0,1,1], [1,0,1,0,0,0,1,0,1], [1,0,0,1,0,1,0,0,1], [1,0,0,0,1,0,0,0,1], [1,0,0,0,0,0,0,0,1]
             ];
         } else if (level === 5) {
             pattern = [
-                [1,0,0,0,0,0,0,0,1],
-                [1,0,0,0,0,0,0,0,1],
-                [1,1,1,1,1,1,1,1,1],
-                [1,0,0,0,0,0,0,0,1],
-                [1,0,0,0,0,0,0,0,1],
-                [1,0,0,0,0,0,0,0,1]
+                [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1]
             ];
         } else if (level === 6) {
             pattern = [
-                [1,0,0,0,0,0,0,0,1],
-                [1,0,0,0,0,0,0,0,1],
-                [1,0,0,0,1,0,0,0,1],
-                [1,0,0,1,0,1,0,0,1],
-                [1,0,1,0,0,0,1,0,1],
-                [1,1,0,0,0,0,0,1,1]
+                [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,1,0,0,0,1], [1,0,0,1,0,1,0,0,1], [1,0,1,0,0,0,1,0,1], [1,1,0,0,0,0,0,1,1]
             ];
         } else if (level === 7) {
             pattern = [
-                [0,0,0,0,1,0,0,0,0],
-                [0,0,0,1,1,1,0,0,0],
-                [0,0,1,1,3,1,1,0,0],
-                [0,1,1,1,1,1,1,1,0],
-                [0,0,1,1,3,1,1,0,0],
-                [0,0,0,1,1,1,0,0,0],
-                [0,0,0,0,1,0,0,0,0]
+                [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,3,1,1,0,0], [0,1,1,1,1,1,1,1,0], [0,0,1,1,3,1,1,0,0], [0,0,0,1,1,1,0,0,0], [0,0,0,0,1,0,0,0,0]
             ];
         } else if (level === 8) {
             pattern = [
-                [5,0,0,5, 0, 0,0,0,0],
-                [5,1,1,5, 0, 0,0,0,0],
-                [5,5,5,5, 0, 5,0,0,5],
-                [0,0,0,0, 0, 5,1,1,5],
-                [0,0,0,0, 0, 5,5,5,5],
-                [0,0, 5,0,0,5, 0,0,0],
-                [0,0, 5,1,1,5, 0,0,0],
-                [0,0, 5,5,5,5, 0,0,0]
+                [5,0,0,5, 0, 0,0,0,0], [5,1,1,5, 0, 0,0,0,0], [5,5,5,5, 0, 5,0,0,5], [0,0,0,0, 0, 5,1,1,5], [0,0,0,0, 0, 5,5,5,5], [0,0, 5,0,0,5, 0,0,0], [0,0, 5,1,1,5, 0,0,0], [0,0, 5,5,5,5, 0,0,0]
             ];
         } else if (level === 9) {
             pattern = [
-                [0,0,1,1,1,1,1,0,0],
-                [0,1,0,0,0,0,0,1,0],
-                [1,0,0,0,0,0,0,0,1],
-                [1,0,0,0,0,0,0,0,1],
-                [0,1,0,0,0,0,0,1,0],
-                [0,0,1,1,1,1,1,0,0]
+                [0,0,1,1,1,1,1,0,0], [0,1,0,0,0,0,0,1,0], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [0,1,0,0,0,0,0,1,0], [0,0,1,1,1,1,1,0,0]
             ];
         } else if (level === 10) {
             pattern = [
-                [3,3,3,3,3,3,3,3,3],
-                [1,1,1,1,1,1,1,1,1],
-                [1,1,1,1,1,1,1,1,1],
-                [1,1,1,1,1,1,1,1,1],
-                [4,4,4,4,4,4,4,4,4]
+                [3,3,3,3,3,3,3,3,3], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [4,4,4,4,4,4,4,4,4]
             ];
         } else if (level === 11) {
             pattern = [
-                [5,0,0,0,0,0,0,0,5],
-                [0,5,0,0,0,0,0,5,0],
-                [0,0,5,1,1,1,5,0,0],
-                [0,0,1,5,1,5,1,0,0],
-                [0,0,1,1,3,1,1,0,0],
-                [0,0,1,5,1,5,1,0,0],
-                [0,0,5,1,1,1,5,0,0],
-                [0,5,0,0,0,0,0,5,0],
-                [5,0,0,0,0,0,0,0,5]
+                [5,0,0,0,0,0,0,0,5], [0,5,0,0,0,0,0,5,0], [0,0,5,1,1,1,5,0,0], [0,0,1,5,1,5,1,0,0], [0,0,1,1,3,1,1,0,0], [0,0,1,5,1,5,1,0,0], [0,0,5,1,1,1,5,0,0], [0,5,0,0,0,0,0,5,0], [5,0,0,0,0,0,0,0,5]
             ];
         } else if (level === 12) {
             pattern = [
-                [1,0,0,0,1,0,0,0,1],
-                [1,1,0,1,1,1,0,1,1],
-                [0,1,1,1,1,1,1,1,0],
-                [0,0,1,1,1,1,1,0,0],
-                [0,0,0,1,1,1,0,0,0]
+                [1,0,0,0,1,0,0,0,1], [1,1,0,1,1,1,0,1,1], [0,1,1,1,1,1,1,1,0], [0,0,1,1,1,1,1,0,0], [0,0,0,1,1,1,0,0,0]
             ];
         } else if (level === 13) {
             pattern = [
-                [0,0,0,1,1,1,0,0,0],
-                [0,0,1,1,3,1,1,0,0],
-                [0,1,1,3,4,3,1,1,0],
-                [0,0,1,1,3,1,1,0,0],
-                [0,0,0,1,1,1,0,0,0],
-                [0,0,0,0,3,0,0,0,0],
-                [0,0,0,0,3,0,0,0,0]
+                [0,0,0,1,1,1,0,0,0], [0,0,1,1,3,1,1,0,0], [0,1,1,3,4,3,1,1,0], [0,0,1,1,3,1,1,0,0], [0,0,0,1,1,1,0,0,0], [0,0,0,0,3,0,0,0,0], [0,0,0,0,3,0,0,0,0]
             ];
         } else if (level === 14) {
             pattern = [
-                [0,0,0,0,1,0,0,0,0],
-                [0,0,0,1,1,1,0,0,0],
-                [0,0,1,1,1,1,1,0,0],
-                [1,1,1,1,1,1,1,1,1],
-                [0,0,0,1,1,1,0,0,0],
-                [0,0,1,0,0,0,1,0,0],
-                [0,1,0,0,0,0,0,1,0]
+                [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,1,1,1,0,0], [1,1,1,1,1,1,1,1,1], [0,0,0,1,1,1,0,0,0], [0,0,1,0,0,0,1,0,0], [0,1,0,0,0,0,0,1,0]
             ];
         } else if (level === 15) {
             pattern = [
-                [0,0,1,1,1,1,1,0,0],
-                [0,1,1,1,1,1,1,1,0],
-                [1,1,1,1,0,0,1,1,1],
-                [1,1,1,0,0,0,0,1,1],
-                [0,1,1,1,1,1,1,1,0],
-                [0,0,1,1,1,1,1,0,0]
+                [0,0,1,1,1,1,1,0,0], [0,1,1,1,1,1,1,1,0], [1,1,1,1,0,0,1,1,1], [1,1,1,0,0,0,0,1,1], [0,1,1,1,1,1,1,1,0], [0,0,1,1,1,1,1,0,0]
             ];
         } else if (level === 16) {
             pattern = [
-                [0,0,0,0,1,0,0,0,0],
-                [0,0,0,1,1,1,0,0,0],
-                [0,0,1,1,1,1,1,0,0],
-                [0,1,1,1,1,1,1,1,0],
-                [1,1,1,1,1,1,1,1,1],
-                [5,5,5,5,5,5,5,5,5]
+                [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,1,1,1,0,0], [0,1,1,1,1,1,1,1,0], [1,1,1,1,1,1,1,1,1], [5,5,5,5,5,5,5,5,5]
             ];
         } else if (level === 17) {
             pattern = [
-                [1,0,1,0,1,0,1,0,1],
-                [1,0,1,0,1,0,1,0,1],
-                [3,0,3,0,3,0,3,0,3],
-                [3,0,3,0,3,0,3,0,3],
-                [1,0,1,0,1,0,1,0,1],
-                [1,0,1,0,1,0,1,0,1]
+                [1,0,1,0,1,0,1,0,1], [1,0,1,0,1,0,1,0,1], [3,0,3,0,3,0,3,0,3], [3,0,3,0,3,0,3,0,3], [1,0,1,0,1,0,1,0,1], [1,0,1,0,1,0,1,0,1]
             ];
         } else if (level === 18) {
             pattern = [
-                [1,1,1,0,1,0,1,1,1],
-                [1,0,0,0,1,0,0,0,1],
-                [1,0,1,1,1,1,1,0,1],
-                [1,0,0,0,0,0,0,0,1],
-                [1,1,1,0,5,0,1,1,1],
-                [0,0,0,0,5,0,0,0,0]
+                [1,1,1,0,1,0,1,1,1], [1,0,0,0,1,0,0,0,1], [1,0,1,1,1,1,1,0,1], [1,0,0,0,0,0,0,0,1], [1,1,1,0,5,0,1,1,1], [0,0,0,0,5,0,0,0,0]
             ];
         } else if (level === 19) {
             pattern = [
-                [1,1,0,0,0,0,0,1,1],
-                [1,1,1,0,0,0,1,1,1],
-                [0,1,1,1,0,1,1,1,0],
-                [0,0,1,1,1,1,1,0,0],
-                [0,0,0,1,1,1,0,0,0]
+                [1,1,0,0,0,0,0,1,1], [1,1,1,0,0,0,1,1,1], [0,1,1,1,0,1,1,1,0], [0,0,1,1,1,1,1,0,0], [0,0,0,1,1,1,0,0,0]
             ];
         } else if (level === 20) {
             pattern = [
-                [0,0,3,3,3,3,3,0,0],
-                [0,3,4,4,4,4,4,3,0],
-                [3,4,4,3,0,0,0,0,0],
-                [3,4,3,0,0,0,0,0,0],
-                [3,4,4,3,0,0,0,0,0],
-                [0,3,4,4,4,4,4,3,0],
-                [0,0,3,3,3,3,3,0,0]
+                [0,0,3,3,3,3,3,0,0], [0,3,4,4,4,4,4,3,0], [3,4,4,3,0,0,0,0,0], [3,4,3,0,0,0,0,0,0], [3,4,4,3,0,0,0,0,0], [0,3,4,4,4,4,4,3,0], [0,0,3,3,3,3,3,0,0]
             ];
         } else {
             for (let r = 0; r < 6; r++) pattern.push([1,1,1,1,1,1,1,1,1]);
@@ -461,26 +303,11 @@ export class Game {
                 if (val > 0) {
                     let brickTypeIndex = r % BRICK_TYPES.length;
                     let type = BRICK_TYPES[brickTypeIndex];
-                    let hits = 1;
-                    let color = type.color;
-                    let points = type.points;
-                    let indestructible = false;
-
-                    if (val === 2) { color = '#FFD700'; points = 100; }
-                    else if (val === 3) { color = '#AAAAAA'; hits = 3; points = 15; }
-                    else if (val === 4) { color = '#FFD700'; hits = 4; points = 100; }
-                    else if (val === 5) { color = '#E0E0E0'; hits = Infinity; points = 0; indestructible = true; }
+                    let hits = 1; let color = type.color; let points = type.points; let indestructible = false;
+                    if (val === 2) { color = '#FFD700'; points = 100; } else if (val === 3) { color = '#AAAAAA'; hits = 3; points = 15; } else if (val === 4) { color = '#FFD700'; hits = 4; points = 100; } else if (val === 5) { color = '#E0E0E0'; hits = Infinity; points = 0; indestructible = true; }
 
                     this.bricks.push({
-                        x: startX + c * (this.brickW + this.padding),
-                        y: this.topWallY + 35 + r * (this.brickH + this.padding),
-                        status: 1,
-                        hits: hits,
-                        maxHits: hits,
-                        color: color,
-                        points: points,
-                        indestructible: indestructible,
-                        hasCapsule: false
+                        x: startX + c * (this.brickW + this.padding), y: this.topWallY + 35 + r * (this.brickH + this.padding), status: 1, hits: hits, maxHits: hits, color: color, points: points, indestructible: indestructible, hasCapsule: false
                     });
                 }
             }
@@ -491,15 +318,12 @@ export class Game {
         let activeDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible);
         let capsuleCount = Math.floor(activeDestructibleBricks.length * rate);
         let shuffled = [...activeDestructibleBricks].sort(() => Math.random() - 0.5);
-        for (let i = 0; i < capsuleCount && i < shuffled.length; i++) {
-            shuffled[i].hasCapsule = true;
-        }
+        for (let i = 0; i < capsuleCount && i < shuffled.length; i++) { shuffled[i].hasCapsule = true; }
     }
 
-    resetBall() {
-        if (this.autoLaunchTimer) clearTimeout(this.autoLaunchTimer);
+    // A MÁGICA: Controla o envio preciso do estado sem misturar (Intro x Respawn)
+    resetBall(reason = 'none') {
         this.clearActiveBonuses();
-
         this.paddle.x = (this.canvas.width - this.paddle.width) / 2;
         
         let radius = 6;
@@ -513,29 +337,24 @@ export class Game {
             dx: 0, dy: 0, radius: radius, stuck: true
         }];
 
-        // Inicia a mensagem de "Prepare-se"
-        this.prepareActive = true;
-        this.autoLaunchTimer = setTimeout(() => { 
-            this.prepareActive = false;
-            this.launchBalls(); 
-        }, 2000);
+        this.levelIntroActive = false;
+        this.prepareActive = false;
+
+        if (reason === 'intro') {
+            this.levelIntroActive = true;
+            this.levelIntroTimer = 120; // 2 segundos (60 frames/seg)
+        } else if (reason === 'respawn') {
+            this.prepareActive = true;
+            this.prepareTimer = 120; // 2 segundos
+        } else {
+            this.launchBalls();
+        }
     }
 
     launchBalls() {
-        if (this.autoLaunchTimer) clearTimeout(this.autoLaunchTimer);
-        
-        let initialDy = -5.0;
-        let initialDxRange = 3;
-        if (this.ballSpeedOption === 'slow') {
-            initialDy = -2.5; 
-            initialDxRange = 2;
-        } else if (this.ballSpeedOption === 'normal') {
-            initialDy = -3.5; 
-            initialDxRange = 2.5;
-        } else if (this.ballSpeedOption === 'fast') {
-            initialDy = -5.0; 
-            initialDxRange = 3;
-        }
+        let initialDy = -5.0; let initialDxRange = 3;
+        if (this.ballSpeedOption === 'slow') { initialDy = -2.5; initialDxRange = 2; } 
+        else if (this.ballSpeedOption === 'normal') { initialDy = -3.5; initialDxRange = 2.5; }
 
         this.balls.forEach(ball => {
             if (ball.stuck) {
@@ -550,140 +369,80 @@ export class Game {
     spawnMultiBalls() {
         let radius = 6;
         if (this.ballSizeOption === 'small') radius = 4.5;
-        if (this.ballSizeOption === 'normal') radius = 6;
         if (this.ballSizeOption === 'large') radius = 8;
 
         let newBalls = [];
         this.balls.forEach(b => {
             for (let i = 0; i < 2; i++) {
-                newBalls.push({
-                    x: b.x, y: b.y,
-                    dx: (Math.random() - 0.5) * 6,
-                    dy: -Math.abs(b.dy || 5.0),
-                    radius: radius, stuck: false
-                });
+                newBalls.push({ x: b.x, y: b.y, dx: (Math.random() - 0.5) * 6, dy: -Math.abs(b.dy || 5.0), radius: radius, stuck: false });
             }
         });
         this.balls = this.balls.concat(newBalls);
     }
 
     triggerVictoryExplosion() {
-        this.victoryExplosionActive = true;
-        this.gameRunning = false;
-        this.balls = [];
-        this.bonuses = [];
-
+        this.victoryExplosionActive = true; this.gameRunning = false; this.balls = []; this.bonuses = [];
         playSound('whoosh');
-
-        let startTime = performance.now();
-        let duration = 7000;
-        let lastFireworkSpawn = 0;
-        let fireworksParticles = [];
+        let startTime = performance.now(); let duration = 7000; let lastFireworkSpawn = 0; let fireworksParticles = [];
 
         const victoryLoop = (timestamp) => {
             let elapsed = timestamp - startTime;
-
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
             let stroboscopicTimer = Math.floor(elapsed / 100);
-            let randomBg = {
-                bg: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 12%)`,
-                stroke: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 50%)`,
-                hexFill: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 25%)`
-            };
+            let randomBg = { bg: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 12%)`, stroke: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 50%)`, hexFill: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 25%)` };
             this.generateLevelPattern(20, randomBg);
-
-            this.ctx.fillStyle = this.hexPattern;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-            this.ctx.fillStyle = '#444';
-            this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
+            this.ctx.fillStyle = this.hexPattern; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = '#444'; this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
 
             if (elapsed - lastFireworkSpawn > 500 && elapsed < duration - 1000) {
-                playSound('firework');
-                lastFireworkSpawn = elapsed;
-
-                let startX = 60 + Math.random() * (this.canvas.width - 120);
-                let startY = 100 + Math.random() * 250;
-                let particleCount = 70;
+                playSound('firework'); lastFireworkSpawn = elapsed;
+                let startX = 60 + Math.random() * (this.canvas.width - 120); let startY = 100 + Math.random() * 250;
                 let hue = Math.floor(Math.random() * 360);
-
-                for (let i = 0; i < particleCount; i++) {
-                    let angle = Math.random() * Math.PI * 2;
-                    let speed = 1.5 + Math.random() * 4.5;
-                    fireworksParticles.push({
-                        x: startX, y: startY,
-                        dx: Math.cos(angle) * speed,
-                        dy: Math.sin(angle) * speed,
-                        alpha: 1,
-                        decay: 0.012 + Math.random() * 0.015,
-                        color: `hsl(${hue + Math.random() * 40}, 100%, 65%)`
-                    });
+                for (let i = 0; i < 70; i++) {
+                    let angle = Math.random() * Math.PI * 2; let speed = 1.5 + Math.random() * 4.5;
+                    fireworksParticles.push({ x: startX, y: startY, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, alpha: 1, decay: 0.012 + Math.random() * 0.015, color: `hsl(${hue + Math.random() * 40}, 100%, 65%)` });
                 }
             }
 
             for (let i = fireworksParticles.length - 1; i >= 0; i--) {
-                let p = fireworksParticles[i];
-                p.x += p.dx;
-                p.y += p.dy;
-                p.dy += 0.05;
-                p.alpha -= p.decay;
-
-                if (p.alpha <= 0) {
-                    fireworksParticles.splice(i, 1);
-                } else {
-                    this.ctx.save();
-                    this.ctx.globalAlpha = p.alpha;
-                    this.ctx.fillStyle = p.color;
-                    this.ctx.beginPath();
-                    this.ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-                    this.ctx.fill();
-                    this.ctx.restore();
-                }
+                let p = fireworksParticles[i]; p.x += p.dx; p.y += p.dy; p.dy += 0.05; p.alpha -= p.decay;
+                if (p.alpha <= 0) fireworksParticles.splice(i, 1);
+                else { this.ctx.save(); this.ctx.globalAlpha = p.alpha; this.ctx.fillStyle = p.color; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2); this.ctx.fill(); this.ctx.restore(); }
             }
 
             let shake = (Math.random() - 0.5) * 4;
-            this.ctx.fillStyle = '#FFFFFF';
-            this.drawRoundedRect(this.paddle.x + shake, this.paddle.y, this.paddle.width, this.paddle.height, 6);
+            this.ctx.fillStyle = '#FFFFFF'; this.drawRoundedRect(this.paddle.x + shake, this.paddle.y, this.paddle.width, this.paddle.height, 6);
 
-            if (elapsed < duration) {
-                requestAnimationFrame(victoryLoop);
-            } else {
-                document.getElementById('winScore').innerText = `Pontos Totais: ${this.score}`;
-                document.getElementById('winOverlay').style.display = 'flex';
-            }
+            if (elapsed < duration) requestAnimationFrame(victoryLoop);
+            else { document.getElementById('winScore').innerText = `Pontos Totais: ${this.score}`; document.getElementById('winOverlay').style.display = 'flex'; }
         };
-
         requestAnimationFrame(victoryLoop);
     }
 
-    triggerWarpLaserAnimation() {
-        this.warpAnimationActive = true;
-        this.warpLaserTimer = 35;
-        playSound('laserZoom');
-    }
+    triggerWarpLaserAnimation() { this.warpAnimationActive = true; this.warpLaserTimer = 35; playSound('laserZoom'); }
 
     update() {
-        // Bloqueio inicial mestre: O jogo não processa nada da física se estiver paralisado
         if (!this.gameRunning || this.victoryExplosionActive) return;
 
         let isPausedForIntro = false;
 
-        // Se a animação de "Fase 1" estiver rodando, consome o tempo
+        // TIMERS BASEADOS EM FRAMES (Garante 100% de precisão e trava o jogo)
         if (this.levelIntroActive) {
             this.levelIntroTimer--;
             if (this.levelIntroTimer <= 0) {
                 this.levelIntroActive = false;
+                this.launchBalls();
+            }
+            isPausedForIntro = true;
+        } else if (this.prepareActive) {
+            this.prepareTimer--;
+            if (this.prepareTimer <= 0) {
+                this.prepareActive = false;
+                this.launchBalls();
             }
             isPausedForIntro = true;
         }
 
-        // Se o texto "Prepare-se" estiver na tela, também bloqueia a física
-        if (this.prepareActive) {
-            isPausedForIntro = true;
-        }
-
-        // Se a porta Warp for acionada
         if (this.warpAnimationActive) {
             this.warpLaserTimer--;
             if (this.warpLaserTimer <= 0) {
@@ -696,13 +455,20 @@ export class Game {
             isPausedForIntro = true;
         }
 
-        // Se alguma das animações/pausas acima for verdadeira, desenha a tela e aborta o processamento físico
         if (isPausedForIntro) {
             this.draw();
             return; 
         }
 
-        // --- FÍSICA DO JOGO NORMAL ABAIXO ---
+        // TIMER SEGURO DE GIGA BALL
+        if (this.gigaBallTimer > 0) {
+            this.gigaBallTimer--;
+            if (this.gigaBallTimer <= 0) {
+                this.applyBallSizeOption();
+            }
+        }
+
+        // --- LÓGICA DE FÍSICA E COLISÃO ---
         for (let bIndex = this.balls.length - 1; bIndex >= 0; bIndex--) {
             let ball = this.balls[bIndex];
             if (!ball) continue;
@@ -711,44 +477,21 @@ export class Game {
                 ball.x = this.paddle.x + this.paddle.width / 2;
                 ball.y = this.paddle.y - ball.radius - 2;
             } else {
-                ball.x += ball.dx;
-                ball.y += ball.dy;
+                ball.x += ball.dx; ball.y += ball.dy;
 
-                if (Math.abs(ball.dx) < 0.3) {
-                    ball.dx = (Math.random() > 0.5 ? 1 : -1) * 2.5;
-                }
+                if (Math.abs(ball.dx) < 0.3) ball.dx = (Math.random() > 0.5 ? 1 : -1) * 2.5;
 
-                if (ball.x + ball.radius > this.canvas.width) {
-                    ball.x = this.canvas.width - ball.radius;
-                    ball.dx *= -1;
-                    playSound('wall');
-                } else if (ball.x - ball.radius < 0) {
-                    ball.x = ball.radius;
-                    ball.dx *= -1;
-                    playSound('wall');
-                }
+                if (ball.x + ball.radius > this.canvas.width) { ball.x = this.canvas.width - ball.radius; ball.dx *= -1; playSound('wall'); } 
+                else if (ball.x - ball.radius < 0) { ball.x = ball.radius; ball.dx *= -1; playSound('wall'); }
 
-                if (ball.y - ball.radius < this.topWallY + 4) {
-                    ball.y = this.topWallY + 4 + ball.radius;
-                    ball.dy = Math.abs(ball.dy);
-                    playSound('wall');
-                }
+                if (ball.y - ball.radius < this.topWallY + 4) { ball.y = this.topWallY + 4 + ball.radius; ball.dy = Math.abs(ball.dy); playSound('wall'); }
 
-                if (ball.y + ball.radius > this.paddle.y && ball.y - ball.radius < this.paddle.y + this.paddle.height &&
-                    ball.x > this.paddle.x && ball.x < this.paddle.x + this.paddle.width) {
+                if (ball.y + ball.radius > this.paddle.y && ball.y - ball.radius < this.paddle.y + this.paddle.height && ball.x > this.paddle.x && ball.x < this.paddle.x + this.paddle.width) {
                     playSound('paddle');
-                    if (this.paddle.glue) {
-                        ball.stuck = true; ball.dx = 0; ball.dy = 0;
-                    } else {
-                        resolvePaddleCollision(ball, this.paddle);
-                    }
+                    if (this.paddle.glue) { ball.stuck = true; ball.dx = 0; ball.dy = 0; } else { resolvePaddleCollision(ball, this.paddle); }
                 }
 
-                if (this.electricShieldActive && ball.y + ball.radius >= this.shieldY) {
-                    ball.dy = -Math.abs(ball.dy);
-                    this.electricShieldActive = false;
-                    playSound('shield');
-                }
+                if (this.electricShieldActive && ball.y + ball.radius >= this.shieldY) { ball.dy = -Math.abs(ball.dy); this.electricShieldActive = false; playSound('shield'); }
 
                 if (ball.y + ball.radius > this.canvas.height) {
                     this.balls.splice(bIndex, 1);
@@ -764,19 +507,14 @@ export class Game {
                             if (!b.indestructible) {
                                 b.hits--;
                                 if (b.hits <= 0) {
-                                    b.status = 0;
-                                    this.score += b.points;
-                                    this.updateHUD();
-
+                                    b.status = 0; this.score += b.points; this.updateHUD();
                                     if (b.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
                                         let capType = this.getDeterministicCapsule();
                                         this.bonuses.push({ x: b.x + this.brickW / 2 - 12, y: b.y, type: capType, speed: 2 });
                                         this.isCapsuleOnScreen = true;
                                     }
                                 } else {
-                                    if (b.hits === 3) b.color = '#888888';
-                                    if (b.hits === 2) b.color = '#666666';
-                                    if (b.hits === 1) b.color = '#444444';
+                                    if (b.hits === 3) b.color = '#888888'; if (b.hits === 2) b.color = '#666666'; if (b.hits === 1) b.color = '#444444';
                                 }
                             }
                         }
@@ -785,6 +523,7 @@ export class Game {
             }
         }
 
+        // LÓGICA DE VIDA / MORTE
         if (this.balls.length === 0) {
             playMp3('src/assets/scream1.mp3'); 
             this.lives--;
@@ -800,29 +539,30 @@ export class Game {
                 if (gMenu) gMenu.style.display = 'flex';
                 return;
             } else {
-                this.resetBall();
+                this.resetBall('respawn'); // Inicia a preparação antes de lançar a próxima bola
             }
         }
 
         let remainingDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible).length;
-        if (remainingDestructibleBricks === 0) {
-            this.advanceToNextLevel();
-            return;
-        }
+        if (remainingDestructibleBricks === 0) { this.advanceToNextLevel(); return; }
 
         for (let i = this.bonuses.length - 1; i >= 0; i--) {
             let b = this.bonuses[i];
             b.y += b.speed;
 
-            if (b.y + 24 > this.paddle.y && b.y < this.paddle.y + this.paddle.height &&
-                b.x + 24 > this.paddle.x && b.x < this.paddle.x + this.paddle.width) {
+            if (b.y + 24 > this.paddle.y && b.y < this.paddle.y + this.paddle.height && b.x + 24 > this.paddle.x && b.x < this.paddle.x + this.paddle.width) {
                 playSound('bonus');
                 this.clearActiveBonuses();
 
+                // RESOLUÇÃO DE BÔNUS SEGURA (NÃO CAUSA TYPE ERROR)
                 if (b.type === 'C') {
                     this.paddle.glue = true;
                 } else if (b.type === 'E') {
-                    this.sizeState = 1; this.updatePaddleSize();
+                    let expandedWidth = this.paddle.width * 1.5;
+                    this.paddle.width = Math.min(expandedWidth, this.canvas.width - 20); // Garante limite seguro
+                    if (this.paddle.x + this.paddle.width > this.canvas.width) {
+                        this.paddle.x = this.canvas.width - this.paddle.width;
+                    }
                 } else if (b.type === 'S') {
                     this.balls.forEach(ball => { ball.dx *= 0.65; ball.dy *= 0.65; });
                 } else if (b.type === 'H') {
@@ -831,17 +571,10 @@ export class Game {
                     this.balls.forEach(ball => {
                         let r = 12;
                         if (this.ballSizeOption === 'small') r = 9;
-                        if (this.ballSizeOption === 'normal') r = 12;
                         if (this.ballSizeOption === 'large') r = 15;
                         ball.radius = r;
                     });
-                    this.gigaBallTimeout = setTimeout(() => {
-                        let r = 6;
-                        if (this.ballSizeOption === 'small') r = 4.5;
-                        if (this.ballSizeOption === 'normal') r = 6;
-                        if (this.ballSizeOption === 'large') r = 8;
-                        this.balls.forEach(ball => { ball.radius = r; });
-                    }, 15000);
+                    this.gigaBallTimer = 15 * 60; // 15s exatos (60 fps), timer à prova de pausa
                 } else if (b.type === 'D') {
                     this.spawnMultiBalls();
                 } else if (b.type === 'P') {
@@ -865,7 +598,7 @@ export class Game {
         if (this.currentLevel < this.TOTAL_LEVELS) {
             this.currentLevel++;
             this.initLevel(this.currentLevel);
-            this.resetBall();
+            this.resetBall('intro');
             this.updateHUD();
         } else {
             this.triggerVictoryExplosion();
@@ -873,88 +606,48 @@ export class Game {
     }
 
     updateHUD() {
-        let s = document.getElementById('scoreText');
-        let l = document.getElementById('levelText');
-        let v = document.getElementById('livesText');
-        if (s) s.innerText = `Pts: ${this.score}`;
-        if (l) l.innerText = `Fase: ${this.currentLevel}/${this.TOTAL_LEVELS}`;
-        if (v) v.innerText = `Vidas: ${this.lives}`;
+        let s = document.getElementById('scoreText'); if (s) s.innerText = `Pts: ${this.score}`;
+        let l = document.getElementById('levelText'); if (l) l.innerText = `Fase: ${this.currentLevel}/${this.TOTAL_LEVELS}`;
+        let v = document.getElementById('livesText'); if (v) v.innerText = `Vidas: ${this.lives}`;
     }
 
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        if (this.hexPattern) {
-            this.ctx.fillStyle = this.hexPattern;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-
-        this.ctx.fillStyle = '#444';
-        this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
+        if (this.hexPattern) { this.ctx.fillStyle = this.hexPattern; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); }
+        this.ctx.fillStyle = '#444'; this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
 
         if (this.electricShieldActive) {
-            this.ctx.shadowBlur = 10;
-            this.ctx.shadowColor = '#00FFFF';
-            this.ctx.strokeStyle = '#00FFFF';
-            this.ctx.lineWidth = 3;
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, this.shieldY);
-            for (let x = 0; x <= this.canvas.width; x += 10) {
-                let offset = (Math.random() - 0.5) * 4;
-                this.ctx.lineTo(x, this.shieldY + offset);
-            }
-            this.ctx.stroke();
-            this.ctx.shadowBlur = 0;
+            this.ctx.shadowBlur = 10; this.ctx.shadowColor = '#00FFFF'; this.ctx.strokeStyle = '#00FFFF'; this.ctx.lineWidth = 3;
+            this.ctx.beginPath(); this.ctx.moveTo(0, this.shieldY);
+            for (let x = 0; x <= this.canvas.width; x += 10) { let offset = (Math.random() - 0.5) * 4; this.ctx.lineTo(x, this.shieldY + offset); }
+            this.ctx.stroke(); this.ctx.shadowBlur = 0;
         }
 
         if (this.warpDoorActive) {
-            this.ctx.shadowBlur = 12;
-            this.ctx.shadowColor = '#00FFFF';
-            this.ctx.strokeStyle = '#00FFFF';
-            this.ctx.lineWidth = 2;
-            this.ctx.fillStyle = '#FF8C00';
+            this.ctx.shadowBlur = 12; this.ctx.shadowColor = '#00FFFF'; this.ctx.strokeStyle = '#00FFFF'; this.ctx.lineWidth = 2; this.ctx.fillStyle = '#FF8C00';
             this.drawRoundedRect(this.canvas.width - 10, this.paddle.y - 18, 10, 45, 4);
-
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.canvas.width - 5, this.paddle.y - 18);
-            for (let py = this.paddle.y - 18; py <= this.paddle.y + 27; py += 6) {
-                let rx = (this.canvas.width - 5) + (Math.random() - 0.5) * 6;
-                this.ctx.lineTo(rx, py);
-            }
-            this.ctx.stroke();
-            this.ctx.shadowBlur = 0;
+            this.ctx.beginPath(); this.ctx.moveTo(this.canvas.width - 5, this.paddle.y - 18);
+            for (let py = this.paddle.y - 18; py <= this.paddle.y + 27; py += 6) { let rx = (this.canvas.width - 5) + (Math.random() - 0.5) * 6; this.ctx.lineTo(rx, py); }
+            this.ctx.stroke(); this.ctx.shadowBlur = 0;
         }
 
         if (this.warpAnimationActive) {
-            this.ctx.shadowBlur = 20;
-            this.ctx.shadowColor = '#00FFFF';
-            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.shadowBlur = 20; this.ctx.shadowColor = '#00FFFF'; this.ctx.fillStyle = '#FFFFFF';
             let beamWidth = (35 - this.warpLaserTimer) * 12;
             this.ctx.fillRect(this.paddle.x, this.paddle.y, Math.min(this.canvas.width - this.paddle.x, beamWidth), this.paddle.height);
             this.ctx.shadowBlur = 0;
         } else {
-            this.ctx.fillStyle = '#ffffff';
-            this.drawRoundedRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 6);
+            this.ctx.fillStyle = '#ffffff'; this.drawRoundedRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 6);
         }
 
         this.ctx.fillStyle = '#ffffff';
-        this.balls.forEach(ball => {
-            this.ctx.beginPath();
-            this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            this.ctx.fill();
-        });
+        this.balls.forEach(ball => { this.ctx.beginPath(); this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); this.ctx.fill(); });
 
-        this.bricks.forEach(b => {
-            if (b.status === 1) {
-                this.ctx.fillStyle = b.color;
-                this.drawRoundedRect(b.x, b.y, this.brickW, this.brickH, 4);
-            }
-        });
+        this.bricks.forEach(b => { if (b.status === 1) { this.ctx.fillStyle = b.color; this.drawRoundedRect(b.x, b.y, this.brickW, this.brickH, 4); } });
 
         this.bonuses.forEach(b => {
-            let capColor = '#FFFFFF';
-            let textColor = '#000000';
-
+            let capColor = '#FFFFFF'; let textColor = '#000000';
             if (b.type === 'C') { capColor = '#00AA00'; textColor = '#FFFFFF'; }
             else if (b.type === 'E') { capColor = '#FFFFFF'; textColor = '#00AA00'; }
             else if (b.type === 'S') { capColor = '#3498db'; textColor = '#FFFFFF'; }
@@ -963,40 +656,31 @@ export class Game {
             else if (b.type === 'D') { capColor = '#00FF00'; textColor = '#FFFFFF'; }
             else if (b.type === 'P') { capColor = '#006400'; textColor = '#FFFFFF'; }
             else if (b.type === 'B') { capColor = '#FF8C00'; textColor = '#FFFFFF'; }
-
-            this.ctx.fillStyle = capColor;
-            this.drawRoundedRect(b.x, b.y, 24, 24, 6);
-
-            this.ctx.fillStyle = textColor;
-            this.ctx.font = 'bold 16px Arial';
-            this.ctx.fillText(b.type, b.x + 6, b.y + 18);
+            this.ctx.fillStyle = capColor; this.drawRoundedRect(b.x, b.y, 24, 24, 6);
+            this.ctx.fillStyle = textColor; this.ctx.font = 'bold 16px Arial'; this.ctx.fillText(b.type, b.x + 6, b.y + 18);
         });
 
-        // DESENHO: Lida de forma inteligente com textos que sobrepõem
-        let overlayActive = this.levelIntroActive || this.prepareActive;
-        
-        if (overlayActive) {
+        // DESENHO DAS MENSAGENS COM FUNDO TRANSLÚCIDO E LÓGICA SEPARADA
+        if (this.levelIntroActive) {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-            this.ctx.fillRect(0, this.canvas.height / 2 - 60, this.canvas.width, 120);
+            this.ctx.fillRect(0, this.canvas.height / 2 - 45, this.canvas.width, 90);
+            this.ctx.font = '900 32px -apple-system, BlinkMacSystemFont, Arial';
             this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = LEVEL_TEXT_COLORS[(this.currentLevel - 1) % LEVEL_TEXT_COLORS.length];
             this.ctx.shadowBlur = 12;
-            
-            if (this.levelIntroActive) {
-                this.ctx.font = '900 32px -apple-system, BlinkMacSystemFont, Arial';
-                this.ctx.fillStyle = LEVEL_TEXT_COLORS[(this.currentLevel - 1) % LEVEL_TEXT_COLORS.length];
-                this.ctx.shadowColor = this.ctx.fillStyle;
-                let textY = this.prepareActive ? (this.canvas.height / 2 - 10) : (this.canvas.height / 2 + 10);
-                this.ctx.fillText(`FASE ${this.currentLevel}`, this.canvas.width / 2, textY);
-            }
-            
-            if (this.prepareActive) {
-                this.ctx.font = '900 22px -apple-system, BlinkMacSystemFont, Arial';
-                this.ctx.fillStyle = '#FFD700';
-                this.ctx.shadowColor = this.ctx.fillStyle;
-                let textY = this.levelIntroActive ? (this.canvas.height / 2 + 25) : (this.canvas.height / 2 + 8);
-                this.ctx.fillText("PREPARE-SE, JOGADOR", this.canvas.width / 2, textY);
-            }
-            
+            this.ctx.shadowColor = this.ctx.fillStyle;
+            this.ctx.fillText(`FASE ${this.currentLevel}`, this.canvas.width / 2, this.canvas.height / 2 + 10);
+            this.ctx.textAlign = 'left';
+            this.ctx.shadowBlur = 0;
+        } else if (this.prepareActive) {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            this.ctx.fillRect(0, this.canvas.height / 2 - 45, this.canvas.width, 90);
+            this.ctx.font = '900 22px -apple-system, BlinkMacSystemFont, Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.shadowBlur = 12;
+            this.ctx.shadowColor = this.ctx.fillStyle;
+            this.ctx.fillText("PREPARE-SE, JOGADOR", this.canvas.width / 2, this.canvas.height / 2 + 8);
             this.ctx.textAlign = 'left';
             this.ctx.shadowBlur = 0;
         }
