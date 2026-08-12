@@ -25,36 +25,42 @@ export function playSound(type) {
         gain.connect(audioCtx.destination);
         
         let now = audioCtx.currentTime;
-        
+        let duration = 0.1; // Duração padrão de segurança
+
         if (type === 'paddle') {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(300, now);
             osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
             gain.gain.setValueAtTime(0.3, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+            duration = 0.08;
         } else if (type === 'brick') {
             osc.type = 'square';
             osc.frequency.setValueAtTime(400, now);
             osc.frequency.exponentialRampToValueAtTime(800, now + 0.06);
             gain.gain.setValueAtTime(0.2, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+            duration = 0.06;
         } else if (type === 'wall') {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(200, now);
             gain.gain.setValueAtTime(0.15, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+            duration = 0.05;
         } else if (type === 'lose') {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(250, now);
             osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
             gain.gain.setValueAtTime(0.4, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+            duration = 0.3;
         } else if (type === 'bonus') {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(500, now);
             osc.frequency.exponentialRampToValueAtTime(1000, now + 0.15);
             gain.gain.setValueAtTime(0.3, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            duration = 0.15;
         } else if (type === 'introJingle') {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(440, now);
@@ -62,10 +68,11 @@ export function playSound(type) {
             osc.frequency.setValueAtTime(659.25, now + 0.2);
             gain.gain.setValueAtTime(0.2, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+            duration = 0.4;
         }
         
         osc.start(now);
-        osc.stop(now + 0.4);
+        osc.stop(now + duration);
     } catch(e) {
         console.warn("Erro ao reproduzir som:", e);
     }
