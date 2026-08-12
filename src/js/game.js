@@ -26,6 +26,11 @@ export class Game {
         this.currentLevel = 1;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore')) || 0;
 
+        // Configurações personalizáveis
+        this.paddleSizeOption = 'large'; // 'small', 'medium', 'large' (default = atual/grande)
+        this.ballSpeedOption = 'fast';   // 'slow', 'normal', 'fast' (default = rápida/atual)
+        this.ballSizeOption = 'normal';  // 'small', 'normal', 'large' (default = normal/atual)
+
         this.gameRunning = false;
         this.victoryExplosionActive = false;
         this.isCapsuleOnScreen = false;
@@ -47,7 +52,60 @@ export class Game {
         this.padding = 5;
 
         this.initLevel(1);
+        this.applyPaddleSizeOption();
     }
+
+    // Métodos de Configurações
+    setPaddleSize(option) {
+        this.paddleSizeOption = option;
+        this.applyPaddleSizeOption();
+    }
+
+    applyPaddleSizeOption() {
+        let scale = 1.35;
+        if (this.paddleSizeOption === 'small') scale = 0.7;
+        if (this.paddleSizeOption === 'medium') scale = 1.0;
+        if (this.paddleSizeOption === 'large') scale = 1.35;
+        
+        this.baseWidth = 90;
+        this.paddle.width = this.baseWidth * scale;
+
+        if (this.paddle.x < 0) this.paddle.x = 0;
+        if (this.paddle.x + this.paddle.width > this.canvas.width) {
+            this.paddle.x = this.canvas.width - this.paddle.width;
+        }
+    }
+
+    setBallSpeed(option) {
+        this.ballSpeedOption = option;
+    }
+
+    setBallSize(option) {
+        this.ballSizeOption = option;
+        let radius = 6;
+        if (option === 'small') radius = 4.5;
+        if (option === 'normal') radius = 6;
+        if (option === 'large') radius = 8;
+
+        this.balls.forEach(ball => {
+            ball.radius = radius;
+        });
+    }
+
+    backupSettings() {
+        return {
+            paddleSize: this.paddleSizeOption,
+            ballSpeed: this.ballSpeedOption,
+            ballSize: this.ballSizeOption
+        };
+    }
+
+    restoreSettings(backup) {
+        this.setPaddleSize(backup.paddleSize);
+        this.setBallSpeed(backup.ballSpeed);
+        this.setBallSize(backup.ballSize);
+    }
+    // -----------------------------------
 
     startGame() {
         initAudio();
@@ -55,7 +113,7 @@ export class Game {
         this.score = 0;
         this.lives = 5;
         
-        const ids = ['menu', 'pauseMenu', 'gameOverMenu', 'winOverlay'];
+        const ids = ['menu', 'settingsMenu', 'settingsPaddleMenu', 'settingsBallSpeedMenu', 'settingsBallSizeMenu', 'pauseMenu', 'gameOverMenu', 'winOverlay'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
@@ -78,7 +136,7 @@ export class Game {
 
     quitToMainMenu() {
         this.gameRunning = false;
-        const menus = ['pauseMenu', 'gameOverMenu', 'winOverlay'];
+        const menus = ['settingsMenu', 'settingsPaddleMenu', 'settingsBallSpeedMenu', 'settingsBallSizeMenu', 'pauseMenu', 'gameOverMenu', 'winOverlay'];
         menus.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
@@ -129,10 +187,16 @@ export class Game {
 
     clearActiveBonuses() {
         this.sizeState = 0;
-        this.updatePaddleSize();
+        this.applyPaddleSizeOption();
         this.paddle.glue = false;
         this.electricShieldActive = false;
-        this.balls.forEach(ball => { ball.radius = 6; });
+        
+        let radius = 6;
+        if (this.ballSizeOption === 'small') radius = 4.5;
+        if (this.ballSizeOption === 'normal') radius = 6;
+        if (this.ballSizeOption === 'large') radius = 8;
+        this.balls.forEach(ball => { ball.radius = radius; });
+
         if (this.gigaBallTimeout) {
             clearTimeout(this.gigaBallTimeout);
             this.gigaBallTimeout = null;
@@ -436,10 +500,16 @@ export class Game {
         this.clearActiveBonuses();
 
         this.paddle.x = (this.canvas.width - this.paddle.width) / 2;
+        
+        let radius = 6;
+        if (this.ballSizeOption === 'small') radius = 4.5;
+        if (this.ballSizeOption === 'normal') radius = 6;
+        if (this.ballSizeOption === 'large') radius = 8;
+
         this.balls = [{
             x: this.paddle.x + this.paddle.width / 2,
-            y: this.paddle.y - 6 - 2,
-            dx: 0, dy: 0, radius: 6, stuck: true
+            y: this.paddle.y - radius - 2,
+            dx: 0, dy: 0, radius: radius, stuck: true
         }];
 
         this.autoLaunchTimer = setTimeout(() => { this.launchBalls(); }, 3000);
@@ -447,17 +517,36 @@ export class Game {
 
     launchBalls() {
         if (this.autoLaunchTimer) clearTimeout(this.autoLaunchTimer);
+        
+        let initialDy = -5.0; // rápida (atual)
+        let initialDxRange = 3;
+        if (this.ballSpeedOption === 'slow') {
+            initialDy = -2.5; // lenta (mínimo abaixo da normal)
+            initialDxRange = 2;
+        } else if (this.ballSpeedOption === 'normal') {
+            initialDy = -3.5; // normal (velocidade antes da mudança)
+            initialDxRange = 2.5;
+        } else if (this.ballSpeedOption === 'fast') {
+            initialDy = -5.0; // rápida
+            initialDxRange = 3;
+        }
+
         this.balls.forEach(ball => {
             if (ball.stuck) {
                 ball.stuck = false;
                 let randomDir = Math.random() > 0.5 ? 1 : -1;
-                ball.dx = randomDir * (3 + Math.random() * 2);
-                ball.dy = -5.0; // Velocidade aumentada
+                ball.dx = randomDir * (initialDxRange + Math.random() * 2);
+                ball.dy = initialDy;
             }
         });
     }
 
     spawnMultiBalls() {
+        let radius = 6;
+        if (this.ballSizeOption === 'small') radius = 4.5;
+        if (this.ballSizeOption === 'normal') radius = 6;
+        if (this.ballSizeOption === 'large') radius = 8;
+
         let newBalls = [];
         this.balls.forEach(b => {
             for (let i = 0; i < 2; i++) {
@@ -465,7 +554,7 @@ export class Game {
                     x: b.x, y: b.y,
                     dx: (Math.random() - 0.5) * 6,
                     dy: -Math.abs(b.dy || 5.0),
-                    radius: b.radius || 6, stuck: false
+                    radius: radius, stuck: false
                 });
             }
         });
@@ -719,9 +808,19 @@ export class Game {
                 } else if (b.type === 'H') {
                     this.electricShieldActive = true;
                 } else if (b.type === 'G') {
-                    this.balls.forEach(ball => { ball.radius = 12; });
+                    this.balls.forEach(ball => {
+                        let r = 12;
+                        if (this.ballSizeOption === 'small') r = 9;
+                        if (this.ballSizeOption === 'normal') r = 12;
+                        if (this.ballSizeOption === 'large') r = 15;
+                        ball.radius = r;
+                    });
                     this.gigaBallTimeout = setTimeout(() => {
-                        this.balls.forEach(ball => { ball.radius = 6; });
+                        let r = 6;
+                        if (this.ballSizeOption === 'small') r = 4.5;
+                        if (this.ballSizeOption === 'normal') r = 6;
+                        if (this.ballSizeOption === 'large') r = 8;
+                        this.balls.forEach(ball => { ball.radius = r; });
                     }, 15000);
                 } else if (b.type === 'D') {
                     this.spawnMultiBalls();
