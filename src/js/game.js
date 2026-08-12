@@ -27,7 +27,7 @@ export class Game {
         this.highScore = parseInt(localStorage.getItem('breakout_highscore')) || 0;
 
         // Configurações personalizáveis
-        this.paddleSizeOption = 'large'; // 'small', 'medium', 'large' (default = atual/grande)
+        this.paddleSizeOption = 'large'; // 'small', 'medium', 'large' (default = grande/atual)
         this.ballSpeedOption = 'fast';   // 'slow', 'normal', 'fast' (default = rápida/atual)
         this.ballSizeOption = 'normal';  // 'small', 'normal', 'large' (default = normal/atual)
 
@@ -53,6 +53,7 @@ export class Game {
 
         this.initLevel(1);
         this.applyPaddleSizeOption();
+        this.applyBallSizeOption();
     }
 
     // Métodos de Configurações
@@ -82,10 +83,14 @@ export class Game {
 
     setBallSize(option) {
         this.ballSizeOption = option;
+        this.applyBallSizeOption();
+    }
+
+    applyBallSizeOption() {
         let radius = 6;
-        if (option === 'small') radius = 4.5;
-        if (option === 'normal') radius = 6;
-        if (option === 'large') radius = 8;
+        if (this.ballSizeOption === 'small') radius = 4.5;
+        if (this.ballSizeOption === 'normal') radius = 6;
+        if (this.ballSizeOption === 'large') radius = 8;
 
         this.balls.forEach(ball => {
             ball.radius = radius;
@@ -190,12 +195,7 @@ export class Game {
         this.applyPaddleSizeOption();
         this.paddle.glue = false;
         this.electricShieldActive = false;
-        
-        let radius = 6;
-        if (this.ballSizeOption === 'small') radius = 4.5;
-        if (this.ballSizeOption === 'normal') radius = 6;
-        if (this.ballSizeOption === 'large') radius = 8;
-        this.balls.forEach(ball => { ball.radius = radius; });
+        this.applyBallSizeOption();
 
         if (this.gigaBallTimeout) {
             clearTimeout(this.gigaBallTimeout);
@@ -518,7 +518,7 @@ export class Game {
     launchBalls() {
         if (this.autoLaunchTimer) clearTimeout(this.autoLaunchTimer);
         
-        let initialDy = -5.0; // rápida (atual)
+        let initialDy = -5.0;
         let initialDxRange = 3;
         if (this.ballSpeedOption === 'slow') {
             initialDy = -2.5; // lenta (mínimo abaixo da normal)
@@ -527,7 +527,7 @@ export class Game {
             initialDy = -3.5; // normal (velocidade antes da mudança)
             initialDxRange = 2.5;
         } else if (this.ballSpeedOption === 'fast') {
-            initialDy = -5.0; // rápida
+            initialDy = -5.0; // rápida (atual)
             initialDxRange = 3;
         }
 

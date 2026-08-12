@@ -59,6 +59,17 @@ document.addEventListener('DOMContentLoaded', () => {
         preview.style.width = (90 * scale) + 'px';
     }
 
+    function updatePreviewBall(sizeOption) {
+        let preview = document.getElementById('previewBall');
+        let radius = 6;
+        if (sizeOption === 'small') radius = 4.5;
+        if (sizeOption === 'normal') radius = 6;
+        if (sizeOption === 'large') radius = 8;
+        let diameter = radius * 2;
+        preview.style.width = diameter + 'px';
+        preview.style.height = diameter + 'px';
+    }
+
     function highlightActiveOptions(className, activeVal, attrName) {
         document.querySelectorAll('.' + className).forEach(b => {
             if (b.getAttribute(attrName) === activeVal) {
@@ -69,14 +80,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Abrir Configurações (Faz backup do estado atual para caso o usuário cancele)
+    // Abrir Configurações (Faz backup do estado atual)
     document.getElementById('btnSettings').addEventListener('click', () => {
         settingsBackup = game.backupSettings();
         hideAllMenus();
         document.getElementById('settingsMenu').style.display = 'flex';
     });
 
-    // Cancelar Configurações (Restaura o backup e volta ao menu)
+    // Salvar alterações (Confirma mudanças e descarta backup)
+    document.getElementById('btnSettingsSave').addEventListener('click', () => {
+        settingsBackup = null;
+        hideAllMenus();
+        document.getElementById('menu').style.display = 'flex';
+    });
+
+    // Cancelar Configurações (Restaura o backup anterior e volta ao menu)
     document.getElementById('btnSettingsCancel').addEventListener('click', () => {
         if (settingsBackup) {
             game.restoreSettings(settingsBackup);
@@ -131,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSettingsBallSize').addEventListener('click', () => {
         hideAllMenus();
         document.getElementById('settingsBallSizeMenu').style.display = 'flex';
+        updatePreviewBall(game.ballSizeOption);
         highlightActiveOptions('btn-ball-size', game.ballSizeOption, 'data-size');
     });
 
@@ -143,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             let size = e.target.getAttribute('data-size');
             game.setBallSize(size);
+            updatePreviewBall(size);
             highlightActiveOptions('btn-ball-size', size, 'data-size');
         });
     });
