@@ -15,10 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${level}`;
     });
 
-    // Bloqueio rigoroso de Input: ignora movimentos caso esteja na Intro ou no Prepare-se
+    // BLOQUEIO TOTAL: Bloqueia a raquete na Intro, no Prepare-se e no Congelamento da Morte
     initInputs(canvas, game.paddle, 
         { onLaunch: () => game.launchBalls() }, 
-        () => game.levelIntroActive || game.prepareActive 
+        () => game.levelIntroActive || game.prepareActive || game.deathPauseActive
     );
 
     window.addEventListener("orientationchange", () => {
@@ -42,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
         picker.open(game.currentLevel);
     });
 
-    // --- LÓGICA DE CONFIGURAÇÕES ---
     function hideAllMenus() {
         document.getElementById('menu').style.display = 'none';
         document.getElementById('settingsMenu').style.display = 'none';
@@ -109,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Submenu: Tamanho do Jogador
+    // Submenus
     document.getElementById('btnSettingsPaddle').addEventListener('click', () => {
         hideAllMenus();
         document.getElementById('settingsPaddleMenu').style.display = 'flex';
@@ -131,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Submenu: Velocidade da Bola
     document.getElementById('btnSettingsBallSpeed').addEventListener('click', () => {
         hideAllMenus();
         document.getElementById('settingsBallSpeedMenu').style.display = 'flex';
@@ -151,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Submenu: Tamanho da Bola
     document.getElementById('btnSettingsBallSize').addEventListener('click', () => {
         hideAllMenus();
         document.getElementById('settingsBallSizeMenu').style.display = 'flex';
