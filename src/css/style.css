@@ -119,11 +119,11 @@ button.btn-select { background: #3498db; color: #fff; }
 /* --- Tela de Aviso para Modo Paisagem (Global e Fixa) --- */
 #landscapeWarning {
     display: none;
-    position: fixed; /* Cobre a janela inteira do navegador de ponta a ponta */
+    position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(10, 10, 15, 0.98);
     color: #fff;
-    z-index: 9999; /* Fica acima de tudo, inclusive menus */
+    z-index: 9999;
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -159,7 +159,6 @@ button.btn-select { background: #3498db; color: #fff; }
     50% { transform: scale(1.03); }
 }
 
-/* Ativa o aviso automaticamente se for tela de celular na horizontal */
 @media screen and (max-width: 900px) and (orientation: landscape) {
     #landscapeWarning {
         display: flex;
