@@ -47,7 +47,7 @@ export class Game {
         this.padding = 5;
     }
 
-    startGame(difficulty) {
+    startGame(difficulty = 'easy') {
         initAudio();
         this.gameRunning = true;
         this.score = 0;
@@ -55,10 +55,13 @@ export class Game {
         
         let menuEl = document.getElementById('menu');
         if (menuEl) menuEl.style.display = 'none';
+        
         let pauseEl = document.getElementById('pauseMenu');
         if (pauseEl) pauseEl.style.display = 'none';
         let overEl = document.getElementById('gameOverMenu');
         if (overEl) overEl.style.display = 'none';
+        let winEl = document.getElementById('winOverlay');
+        if (winEl) winEl.style.display = 'none';
 
         this.initLevel(this.currentLevel);
         this.resetBall();
@@ -72,7 +75,7 @@ export class Game {
 
     restartFromLevel1() {
         this.currentLevel = 1;
-        this.startGame('medium');
+        this.startGame('easy');
     }
 
     quitToMainMenu() {
@@ -81,7 +84,7 @@ export class Game {
         document.getElementById('gameOverMenu').style.display = 'none';
         document.getElementById('winOverlay').style.display = 'none';
         document.getElementById('menu').style.display = 'flex';
-        document.getElementById('selectLevelBtn').innerText = `Fase: ${this.currentLevel}`;
+        document.getElementById('selectLevelBtn').innerText = `Selecionar Fase: ${this.currentLevel}`;
         let highScoreEl = document.getElementById('menuHighScore');
         if (highScoreEl) highScoreEl.innerText = `RECORDE: ${this.highScore}`;
     }

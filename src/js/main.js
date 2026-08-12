@@ -6,106 +6,65 @@ import { initInputs } from './input.js';
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
     const game = new Game(canvas);
+    let wasRunningBeforeRotation = false;
 
-    // Instancia o módulo do Seletor iOS isolado
     const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
         game.currentLevel = level;
         let selectBtn = document.getElementById('selectLevelBtn');
-        if (selectBtn) {
-            selectBtn.innerText = `Fase: ${level}`;
-        }
+        if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${level}`;
     });
 
-    // Inicializa os controles de toque e mouse para mover a raquete
-    initInputs(canvas, game.paddle, {
-        onLaunch: () => {
-            game.launchBalls();
-        }
-    });
+    initInputs(canvas, game.paddle, { onLaunch: () => game.launchBalls() });
 
-    // Função para tentar travar o celular na vertical (compatível com Android)
     async function lockPortrait() {
         try {
             if (screen.orientation && screen.orientation.lock) {
                 await screen.orientation.lock('portrait');
             }
-        } catch (err) {
-            console.log("Bloqueio de orientação automático não suportado neste navegador.");
-        }
+        } catch (err) { console.log("Bloqueio não suportado."); }
     }
 
-    // Vigia a rotação da tela: se o usuário virar o celular para a horizontal, o jogo pausa imediatamente
     const landscapeQuery = window.matchMedia("(orientation: landscape)");
     function handleOrientationChange(e) {
-        if (e.matches && window.innerWidth <= 900) {
-            if (game.gameRunning) {
-                game.gameRunning = false; // Pausa o motor do jogo
+        if (window.innerWidth <= 900) {
+            if (e.matches) {
+                wasRunningBeforeRotation = game.gameRunning;
+                game.gameRunning = false; 
+            } else {
+                if (wasRunningBeforeRotation) {
+                    game.gameRunning = true;
+                }
             }
         }
     }
-    if (landscapeQuery.addEventListener) {
-        landscapeQuery.addEventListener('change', handleOrientationChange);
-    } else {
-        landscapeQuery.addListener(handleOrientationChange);
-    }
+    landscapeQuery.addEventListener('change', handleOrientationChange);
 
-    // Botões de Dificuldade do Menu Principal
-    document.getElementById('btnEasy').addEventListener('click', () => {
+    document.getElementById('btnStart').addEventListener('click', () => {
         lockPortrait();
         game.startGame('easy');
     });
-    
-    document.getElementById('btnMedium').addEventListener('click', () => {
-        lockPortrait();
-        game.startGame('medium');
-    });
-    
-    document.getElementById('btnHard').addEventListener('click', () => {
-        lockPortrait();
-        game.startGame('hard');
-    });
 
-    // Botão para abrir o seletor de fases usando o módulo
     document.getElementById('selectLevelBtn').addEventListener('click', () => {
         picker.open(game.currentLevel);
     });
 
-    // Botão de Pausa (HUD superior "✕")
-    const quitBtn = document.getElementById('quitBtn');
-    if (quitBtn) {
-        quitBtn.addEventListener('click', () => {
-            game.gameRunning = false;
-            document.getElementById('pauseMenu').style.display = 'flex';
-        });
-    }
+    document.getElementById('quitBtn').addEventListener('click', () => {
+        game.gameRunning = false;
+        document.getElementById('pauseMenu').style.display = 'flex';
+    });
 
-    // Ações do Menu de Pausa
-    const pauseContinue = document.querySelector('#pauseMenu .btn-continue');
-    if (pauseContinue) pauseContinue.addEventListener('click', () => game.resumeGame());
+    document.querySelector('#pauseMenu .btn-continue').addEventListener('click', () => game.resumeGame());
+    document.querySelector('#pauseMenu .btn-restart').addEventListener('click', () => game.restartFromLevel1());
+    document.querySelector('#pauseMenu .btn-quit').addEventListener('click', () => game.quitToMainMenu());
 
-    const pauseRestart = document.querySelector('#pauseMenu .btn-restart');
-    if (pauseRestart) pauseRestart.addEventListener('click', () => game.restartFromLevel1());
+    document.querySelector('#gameOverMenu .btn-continue').addEventListener('click', () => game.continueGame());
+    document.querySelector('#gameOverMenu .btn-quit').addEventListener('click', () => game.quitToMainMenu());
+    document.querySelector('#winOverlay .btn-quit').addEventListener('click', () => game.quitToMainMenu());
 
-    const pauseQuit = document.querySelector('#pauseMenu .btn-quit');
-    if (pauseQuit) pauseQuit.addEventListener('click', () => game.quitToMainMenu());
-
-    // Ações do Menu de Game Over
-    const overContinue = document.querySelector('#gameOverMenu .btn-continue');
-    if (overContinue) overContinue.addEventListener('click', () => game.continueGame());
-
-    const overQuit = document.querySelector('#gameOverMenu .btn-quit');
-    if (overQuit) overQuit.addEventListener('click', () => game.quitToMainMenu());
-
-    // Ações da Tela de Vitória
-    const winQuit = document.querySelector('#winOverlay .btn-quit');
-    if (winQuit) winQuit.addEventListener('click', () => game.quitToMainMenu());
-
-    // Loop principal do jogo
     function gameLoop() {
         game.update();
         game.draw();
         requestAnimationFrame(gameLoop);
     }
-    
     requestAnimationFrame(gameLoop);
 });
