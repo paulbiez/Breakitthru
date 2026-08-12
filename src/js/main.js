@@ -16,31 +16,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initInputs(canvas, game.paddle, { onLaunch: () => game.launchBalls() });
 
-    async function lockPortrait() {
-        try {
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('portrait');
-            }
-        } catch (err) { console.log("Bloqueio não suportado."); }
-    }
-
-    const landscapeQuery = window.matchMedia("(orientation: landscape)");
-    function handleOrientationChange(e) {
-        if (window.innerWidth <= 900) {
-            if (e.matches) {
+    window.addEventListener("orientationchange", () => {
+        setTimeout(() => {
+            if (window.innerWidth > window.innerHeight) {
                 wasRunningBeforeRotation = game.gameRunning;
-                game.gameRunning = false; 
+                game.gameRunning = false;
             } else {
                 if (wasRunningBeforeRotation) {
                     game.gameRunning = true;
                 }
             }
-        }
-    }
-    landscapeQuery.addEventListener('change', handleOrientationChange);
+        }, 300);
+    });
 
     document.getElementById('btnStart').addEventListener('click', () => {
-        lockPortrait();
         game.startGame('easy');
     });
 

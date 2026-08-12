@@ -45,6 +45,8 @@ export class Game {
         this.brickW = 35;
         this.brickH = 15;
         this.padding = 5;
+
+        this.initLevel(1);
     }
 
     startGame(difficulty = 'easy') {
@@ -53,15 +55,11 @@ export class Game {
         this.score = 0;
         this.lives = 5;
         
-        let menuEl = document.getElementById('menu');
-        if (menuEl) menuEl.style.display = 'none';
-        
-        let pauseEl = document.getElementById('pauseMenu');
-        if (pauseEl) pauseEl.style.display = 'none';
-        let overEl = document.getElementById('gameOverMenu');
-        if (overEl) overEl.style.display = 'none';
-        let winEl = document.getElementById('winOverlay');
-        if (winEl) winEl.style.display = 'none';
+        const ids = ['menu', 'pauseMenu', 'gameOverMenu', 'winOverlay'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
 
         this.initLevel(this.currentLevel);
         this.resetBall();
@@ -80,17 +78,25 @@ export class Game {
 
     quitToMainMenu() {
         this.gameRunning = false;
-        document.getElementById('pauseMenu').style.display = 'none';
-        document.getElementById('gameOverMenu').style.display = 'none';
-        document.getElementById('winOverlay').style.display = 'none';
-        document.getElementById('menu').style.display = 'flex';
-        document.getElementById('selectLevelBtn').innerText = `Selecionar Fase: ${this.currentLevel}`;
+        const menus = ['pauseMenu', 'gameOverMenu', 'winOverlay'];
+        menus.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        let menu = document.getElementById('menu');
+        if (menu) menu.style.display = 'flex';
+
+        let btn = document.getElementById('selectLevelBtn');
+        if (btn) btn.innerText = `Selecionar Fase: ${this.currentLevel}`;
+
         let highScoreEl = document.getElementById('menuHighScore');
         if (highScoreEl) highScoreEl.innerText = `RECORDE: ${this.highScore}`;
     }
 
     continueGame() {
-        document.getElementById('gameOverMenu').style.display = 'none';
+        let overEl = document.getElementById('gameOverMenu');
+        if (overEl) overEl.style.display = 'none';
         this.lives = 3;
         this.gameRunning = true;
         this.resetBall();
@@ -677,9 +683,12 @@ export class Game {
 
             if (this.lives <= 0) {
                 this.gameRunning = false;
-                document.getElementById('gameOverTitle').innerText = "FIM DE JOGO";
-                document.getElementById('finalScore').innerText = `Pontos Totais: ${this.score}`;
-                document.getElementById('gameOverMenu').style.display = 'flex';
+                let gTitle = document.getElementById('gameOverTitle');
+                if (gTitle) gTitle.innerText = "FIM DE JOGO";
+                let fScore = document.getElementById('finalScore');
+                if (fScore) fScore.innerText = `Pontos Totais: ${this.score}`;
+                let gMenu = document.getElementById('gameOverMenu');
+                if (gMenu) gMenu.style.display = 'flex';
                 return;
             } else {
                 this.resetBall();
@@ -745,9 +754,12 @@ export class Game {
     }
 
     updateHUD() {
-        document.getElementById('scoreText').innerText = `Pts: ${this.score}`;
-        document.getElementById('levelText').innerText = `Fase: ${this.currentLevel}/${this.TOTAL_LEVELS}`;
-        document.getElementById('livesText').innerText = `Vidas: ${this.lives}`;
+        let s = document.getElementById('scoreText');
+        let l = document.getElementById('levelText');
+        let v = document.getElementById('livesText');
+        if (s) s.innerText = `Pts: ${this.score}`;
+        if (l) l.innerText = `Fase: ${this.currentLevel}/${this.TOTAL_LEVELS}`;
+        if (v) v.innerText = `Vidas: ${this.lives}`;
     }
 
     draw() {
