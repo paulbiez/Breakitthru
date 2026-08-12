@@ -26,13 +26,10 @@ export class Game {
         this.currentLevel = 1;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore')) || 0;
 
-        // Dificuldade secreta interna ('easy', 'medium', 'hard')
-        this.difficulty = 'easy'; 
-
-        // Configurações personalizáveis de customização
-        this.paddleSizeOption = 'large'; 
-        this.ballSpeedOption = 'fast';   
-        this.ballSizeOption = 'normal';  
+        // Configurações personalizáveis do menu
+        this.paddleSizeOption = 'large'; // 'small', 'medium', 'large'
+        this.ballSpeedOption = 'fast';   // 'slow', 'normal', 'fast'
+        this.ballSizeOption = 'normal';  // 'small', 'normal', 'large'
 
         this.gameRunning = false;
         this.victoryExplosionActive = false;
@@ -58,6 +55,42 @@ export class Game {
         this.applyPaddleSizeOption();
         this.applyBallSizeOption();
     }
+
+    // --- LÓGICA SECRETA DE DIFICULDADE (BASEADA NAS CONFIGURAÇÕES) ---
+    calculateSecretDifficulty() {
+        // 1. Mapeia Raquete
+        let paddleDiff = 'medium';
+        if (this.paddleSizeOption === 'small') paddleDiff = 'hard';
+        else if (this.paddleSizeOption === 'medium') paddleDiff = 'medium';
+        else if (this.paddleSizeOption === 'large') paddleDiff = 'easy';
+
+        // 2. Mapeia Velocidade da Bola
+        let speedDiff = 'medium';
+        if (this.ballSpeedOption === 'slow') speedDiff = 'easy';
+        else if (this.ballSpeedOption === 'normal') speedDiff = 'medium';
+        else if (this.ballSpeedOption === 'fast') speedDiff = 'hard';
+
+        // 3. Mapeia Tamanho da Bola
+        let sizeDiff = 'medium';
+        if (this.ballSizeOption === 'small') sizeDiff = 'hard';
+        else if (this.ballSizeOption === 'normal') sizeDiff = 'medium';
+        else if (this.ballSizeOption === 'large') sizeDiff = 'easy';
+
+        // Conta os votos
+        let counts = { easy: 0, medium: 0, hard: 0 };
+        counts[paddleDiff]++;
+        counts[speedDiff]++;
+        counts[sizeDiff]++;
+
+        // Verifica maioria (>= 2)
+        if (counts.easy >= 2) return 'easy';
+        if (counts.hard >= 2) return 'hard';
+        if (counts.medium >= 2) return 'medium';
+
+        // Em caso de empate (1, 1, 1), retorna 'medium'
+        return 'medium';
+    }
+    // -------------------------------------------------------------
 
     setPaddleSize(option) {
         this.paddleSizeOption = option;
@@ -103,8 +136,7 @@ export class Game {
         return {
             paddleSize: this.paddleSizeOption,
             ballSpeed: this.ballSpeedOption,
-            ballSize: this.ballSizeOption,
-            difficulty: this.difficulty
+            ballSize: this.ballSizeOption
         };
     }
 
@@ -112,7 +144,6 @@ export class Game {
         this.setPaddleSize(backup.paddleSize);
         this.setBallSpeed(backup.ballSpeed);
         this.setBallSize(backup.ballSize);
-        this.difficulty = backup.difficulty;
     }
 
     startGame() {
@@ -170,7 +201,10 @@ export class Game {
     }
 
     getDeterministicCapsule() {
-        const weights = DIFFICULTY_CONFIGS[this.difficulty].weights;
+        // Pega a dificuldade calculada secretamente pelas configurações atuais
+        let currentDiff = this.calculateSecretDifficulty();
+        const weights = DIFFICULTY_CONFIGS[currentDiff].weights;
+
         let totalWeight = weights.reduce((acc, c) => acc + c.weight, 0);
         let seed = (Math.abs(this.score) % 10) + Math.floor(Math.abs(this.paddle.x));
         let value = seed % totalWeight;
@@ -491,7 +525,9 @@ export class Game {
             }
         }
 
-        let rate = DIFFICULTY_CONFIGS[this.difficulty].spawnRate;
+        // Pega a taxa de spawn baseada na dificuldade secreta calculada
+        let currentDiff = this.calculateSecretDifficulty();
+        let rate = DIFFICULTY_CONFIGS[currentDiff].spawnRate;
         let activeDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible);
         let capsuleCount = Math.floor(activeDestructibleBricks.length * rate);
         let shuffled = [...activeDestructibleBricks].sort(() => Math.random() - 0.5);
