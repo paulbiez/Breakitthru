@@ -1,7 +1,9 @@
 // src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
 import { playSound, initAudio, playMp3 } from './audio.js';
-import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
+import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS } from './config.js';
+import { getLevelPattern } from './levels.js';
+import { drawRoundedRect, generateHexPattern } from './graphics.js';
 
 export class Game {
     constructor(canvas) {
@@ -26,7 +28,6 @@ export class Game {
         this.currentLevel = 1;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore')) || 0;
 
-        // Configurações personalizáveis (Lógica Secreta)
         this.paddleSizeOption = 'large'; 
         this.ballSpeedOption = 'fast';   
         this.ballSizeOption = 'normal';  
@@ -38,7 +39,6 @@ export class Game {
         this.electricShieldActive = false;
         this.shieldY = 580;
 
-        // Controles de Estados e Timers (60 FPS = 1 segundo)
         this.deathPauseActive = false;
         this.deathPauseTimer = 0;
         this.levelIntroActive = false;
@@ -74,9 +74,7 @@ export class Game {
         else if (this.ballSizeOption === 'large') sizeDiff = 'easy';
 
         let counts = { easy: 0, medium: 0, hard: 0 };
-        counts[paddleDiff]++;
-        counts[speedDiff]++;
-        counts[sizeDiff]++;
+        counts[paddleDiff]++; counts[speedDiff]++; counts[sizeDiff]++;
 
         if (counts.easy >= 2) return 'easy';
         if (counts.hard >= 2) return 'hard';
@@ -92,14 +90,10 @@ export class Game {
         if (this.paddleSizeOption === 'small') scale = 0.7;
         if (this.paddleSizeOption === 'medium') scale = 1.0;
         if (this.paddleSizeOption === 'large') scale = 1.35;
-        
         this.baseWidth = 90;
         this.paddle.width = this.baseWidth * scale;
-
         if (this.paddle.x < 0) this.paddle.x = 0;
-        if (this.paddle.x + this.paddle.width > this.canvas.width) {
-            this.paddle.x = this.canvas.width - this.paddle.width;
-        }
+        if (this.paddle.x + this.paddle.width > this.canvas.width) this.paddle.x = this.canvas.width - this.paddle.width;
     }
 
     applyBallSizeOption() {
@@ -153,135 +147,22 @@ export class Game {
         if (this.gigaBallTimeout) { clearTimeout(this.gigaBallTimeout); this.gigaBallTimeout = null; }
     }
 
-    generateLevelPattern(level, customColors = null) {
-        let colors = customColors || LEVEL_BACKGROUNDS[(level - 1) % LEVEL_BACKGROUNDS.length];
-        let patternCanvas = document.createElement('canvas');
-        let pCtx = patternCanvas.getContext('2d');
-        patternCanvas.width = 16; patternCanvas.height = 28;
-
-        pCtx.fillStyle = colors.bg; pCtx.fillRect(0, 0, 16, 28);
-        pCtx.strokeStyle = colors.stroke; pCtx.lineWidth = 1; pCtx.fillStyle = colors.hexFill;
-
-        for (let y = -7; y < 35; y += 14) {
-            for (let x = -8; x < 24; x += 16) {
-                let offX = (Math.floor(y / 14) % 2 === 0) ? 0 : 8;
-                pCtx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    let angle = (Math.PI / 3) * i;
-                    let hx = (x + offX) + 6 * Math.cos(angle);
-                    let hy = y + 6 * Math.sin(angle);
-                    if (i === 0) pCtx.moveTo(hx, hy); else pCtx.lineTo(hx, hy);
-                }
-                pCtx.closePath(); pCtx.fill(); pCtx.stroke();
-            }
-        }
-        this.hexPattern = this.ctx.createPattern(patternCanvas, 'repeat');
-    }
-
-    drawRoundedRect(x, y, w, h, radius) {
-        this.ctx.beginPath();
-        if (this.ctx.roundRect) { this.ctx.roundRect(x, y, w, h, radius); } 
-        else { this.ctx.moveTo(x + radius, y); this.ctx.arcTo(x + w, y, x + w, y + h, radius); this.ctx.arcTo(x + w, y + h, x, y + h, radius); this.ctx.arcTo(x, y + h, x, y, radius); this.ctx.arcTo(x, y, x + w, y, radius); }
-        this.ctx.fill();
-    }
-
     initLevel(level) {
-        this.bricks = []; this.bonuses = [];
+        this.bricks = [];
+        this.bonuses = [];
         this.isCapsuleOnScreen = false;
         this.warpDoorActive = false;
         this.electricShieldActive = false;
         this.warpAnimationActive = false;
         this.deathPauseActive = false;
 
-        this.generateLevelPattern(level);
+        this.hexPattern = generateHexPattern(this.ctx, level);
         playSound('introJingle');
+        this.levelIntroActive = true;
+        this.levelIntroTimer = 120;
 
         const startX = (this.canvas.width - (this.brickCols * (this.brickW + this.padding))) / 2;
-        let pattern = [];
-
-        if (level === 1) {
-            pattern = [
-                [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1]
-            ];
-        } else if (level === 2) {
-            pattern = [
-                [1,1,1, 0, 1,0,0,0,1], [1,0,0, 0, 1,1,0,1,1], [1,0,0, 0, 1,0,1,0,1], [1,0,0, 0, 1,0,1,0,1], [1,0,0, 0, 1,0,0,0,1], [1,0,0, 0, 1,0,0,0,1], [1,1,1, 0, 1,0,0,0,1]
-            ];
-        } else if (level === 3) {
-            pattern = [
-                [0,1,1,1,1,1,1,0,0], [1,1,0,0,0,0,0,0,0], [1,0,0,0,0,0,0,0,0], [1,0,0,0,0,0,0,0,0], [1,1,0,0,0,0,0,0,0], [0,1,1,1,1,1,1,0,0]
-            ];
-        } else if (level === 4) {
-            pattern = [
-                [1,0,0,0,0,0,0,0,1], [1,1,0,0,0,0,0,1,1], [1,0,1,0,0,0,1,0,1], [1,0,0,1,0,1,0,0,1], [1,0,0,0,1,0,0,0,1], [1,0,0,0,0,0,0,0,1]
-            ];
-        } else if (level === 5) {
-            pattern = [
-                [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1]
-            ];
-        } else if (level === 6) {
-            pattern = [
-                [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,1,0,0,0,1], [1,0,0,1,0,1,0,0,1], [1,0,1,0,0,0,1,0,1], [1,1,0,0,0,0,0,1,1]
-            ];
-        } else if (level === 7) {
-            pattern = [
-                [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,3,1,1,0,0], [0,1,1,1,1,1,1,1,0], [0,0,1,1,3,1,1,0,0], [0,0,0,1,1,1,0,0,0], [0,0,0,0,1,0,0,0,0]
-            ];
-        } else if (level === 8) {
-            pattern = [
-                [5,0,0,5, 0, 0,0,0,0], [5,1,1,5, 0, 0,0,0,0], [5,5,5,5, 0, 5,0,0,5], [0,0,0,0, 0, 5,1,1,5], [0,0,0,0, 0, 5,5,5,5], [0,0, 5,0,0,5, 0,0,0], [0,0, 5,1,1,5, 0,0,0], [0,0, 5,5,5,5, 0,0,0]
-            ];
-        } else if (level === 9) {
-            pattern = [
-                [0,0,1,1,1,1,1,0,0], [0,1,0,0,0,0,0,1,0], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [0,1,0,0,0,0,0,1,0], [0,0,1,1,1,1,1,0,0]
-            ];
-        } else if (level === 10) {
-            pattern = [
-                [3,3,3,3,3,3,3,3,3], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [4,4,4,4,4,4,4,4,4]
-            ];
-        } else if (level === 11) {
-            pattern = [
-                [5,0,0,0,0,0,0,0,5], [0,5,0,0,0,0,0,5,0], [0,0,5,1,1,1,5,0,0], [0,0,1,5,1,5,1,0,0], [0,0,1,1,3,1,1,0,0], [0,0,1,5,1,5,1,0,0], [0,0,5,1,1,1,5,0,0], [0,5,0,0,0,0,0,5,0], [5,0,0,0,0,0,0,0,5]
-            ];
-        } else if (level === 12) {
-            pattern = [
-                [1,0,0,0,1,0,0,0,1], [1,1,0,1,1,1,0,1,1], [0,1,1,1,1,1,1,1,0], [0,0,1,1,1,1,1,0,0], [0,0,0,1,1,1,0,0,0]
-            ];
-        } else if (level === 13) {
-            pattern = [
-                [0,0,0,1,1,1,0,0,0], [0,0,1,1,3,1,1,0,0], [0,1,1,3,4,3,1,1,0], [0,0,1,1,3,1,1,0,0], [0,0,0,1,1,1,0,0,0], [0,0,0,0,3,0,0,0,0], [0,0,0,0,3,0,0,0,0]
-            ];
-        } else if (level === 14) {
-            pattern = [
-                [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,1,1,1,0,0], [1,1,1,1,1,1,1,1,1], [0,0,0,1,1,1,0,0,0], [0,0,1,0,0,0,1,0,0], [0,1,0,0,0,0,0,1,0]
-            ];
-        } else if (level === 15) {
-            pattern = [
-                [0,0,1,1,1,1,1,0,0], [0,1,1,1,1,1,1,1,0], [1,1,1,1,0,0,1,1,1], [1,1,1,0,0,0,0,1,1], [0,1,1,1,1,1,1,1,0], [0,0,1,1,1,1,1,0,0]
-            ];
-        } else if (level === 16) {
-            pattern = [
-                [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,1,1,1,0,0], [0,1,1,1,1,1,1,1,0], [1,1,1,1,1,1,1,1,1], [5,5,5,5,5,5,5,5,5]
-            ];
-        } else if (level === 17) {
-            pattern = [
-                [1,0,1,0,1,0,1,0,1], [1,0,1,0,1,0,1,0,1], [3,0,3,0,3,0,3,0,3], [3,0,3,0,3,0,3,0,3], [1,0,1,0,1,0,1,0,1], [1,0,1,0,1,0,1,0,1]
-            ];
-        } else if (level === 18) {
-            pattern = [
-                [1,1,1,0,1,0,1,1,1], [1,0,0,0,1,0,0,0,1], [1,0,1,1,1,1,1,0,1], [1,0,0,0,0,0,0,0,1], [1,1,1,0,5,0,1,1,1], [0,0,0,0,5,0,0,0,0]
-            ];
-        } else if (level === 19) {
-            pattern = [
-                [1,1,0,0,0,0,0,1,1], [1,1,1,0,0,0,1,1,1], [0,1,1,1,0,1,1,1,0], [0,0,1,1,1,1,1,0,0], [0,0,0,1,1,1,0,0,0]
-            ];
-        } else if (level === 20) {
-            pattern = [
-                [0,0,3,3,3,3,3,0,0], [0,3,4,4,4,4,4,3,0], [3,4,4,3,0,0,0,0,0], [3,4,3,0,0,0,0,0,0], [3,4,4,3,0,0,0,0,0], [0,3,4,4,4,4,4,3,0], [0,0,3,3,3,3,3,0,0]
-            ];
-        } else {
-            for (let r = 0; r < 6; r++) pattern.push([1,1,1,1,1,1,1,1,1]);
-        }
+        let pattern = getLevelPattern(level);
 
         for (let r = 0; r < pattern.length; r++) {
             for (let c = 0; c < pattern[r].length; c++) {
@@ -299,8 +180,7 @@ export class Game {
                     this.bricks.push({
                         x: startX + c * (this.brickW + this.padding),
                         y: this.topWallY + 35 + r * (this.brickH + this.padding),
-                        status: 1, hits: hits, maxHits: hits, color: color, points: points,
-                        indestructible: indestructible, hasCapsule: false
+                        status: 1, hits: hits, maxHits: hits, color: color, points: points, indestructible: indestructible, hasCapsule: false
                     });
                 }
             }
@@ -337,10 +217,9 @@ export class Game {
 
         if (reason === 'intro') {
             this.levelIntroActive = true;
-            this.levelIntroTimer = 120; // 2 segundos
+            this.levelIntroTimer = 120;
         } else if (reason === 'respawn') {
             this.prepareActive = true;
-            // 4 SEGUNDOS EXATOS DE ESPERA NA TELA "PREPARE-SE" (60 fps * 4 = 240)
             this.prepareTimer = 240; 
         } else {
             this.launchBalls();
@@ -386,8 +265,9 @@ export class Game {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             let stroboscopicTimer = Math.floor(elapsed / 100);
             let randomBg = { bg: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 12%)`, stroke: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 50%)`, hexFill: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 25%)` };
-            this.generateLevelPattern(20, randomBg);
-            this.ctx.fillStyle = this.hexPattern; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            
+            this.ctx.fillStyle = generateHexPattern(this.ctx, 20, randomBg); 
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.fillStyle = '#444'; this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
 
             if (elapsed - lastFireworkSpawn > 500 && elapsed < duration - 1000) {
@@ -407,7 +287,7 @@ export class Game {
             }
 
             let shake = (Math.random() - 0.5) * 4;
-            this.ctx.fillStyle = '#FFFFFF'; this.drawRoundedRect(this.paddle.x + shake, this.paddle.y, this.paddle.width, this.paddle.height, 6);
+            this.ctx.fillStyle = '#FFFFFF'; drawRoundedRect(this.ctx, this.paddle.x + shake, this.paddle.y, this.paddle.width, this.paddle.height, 6);
 
             if (elapsed < duration) requestAnimationFrame(victoryLoop);
             else { document.getElementById('winScore').innerText = `Pontos Totais: ${this.score}`; document.getElementById('winOverlay').style.display = 'flex'; }
@@ -418,27 +298,20 @@ export class Game {
     triggerWarpLaserAnimation() { this.warpAnimationActive = true; this.warpLaserTimer = 35; playSound('laserZoom'); }
 
     update() {
-        // Bloqueio inicial mestre
         if (!this.gameRunning || this.victoryExplosionActive) return;
 
         let isPausedForIntro = false;
 
-        // NOVO: Processa a Pausa da Morte (3 Segundos congelados com a tela vazia na queda)
         if (this.deathPauseActive) {
             this.deathPauseTimer--;
             if (this.deathPauseTimer <= 0) {
                 this.deathPauseActive = false;
-                
                 if (this.lives <= 0) {
                     this.gameRunning = false;
-                    let gTitle = document.getElementById('gameOverTitle');
-                    if (gTitle) gTitle.innerText = "FIM DO JOGO";
-                    let fScore = document.getElementById('finalScore');
-                    if (fScore) fScore.innerText = `Pontos Totais: ${this.score}`;
-                    let gMenu = document.getElementById('gameOverMenu');
-                    if (gMenu) gMenu.style.display = 'flex';
+                    let gTitle = document.getElementById('gameOverTitle'); if (gTitle) gTitle.innerText = "FIM DO JOGO";
+                    let fScore = document.getElementById('finalScore'); if (fScore) fScore.innerText = `Pontos Totais: ${this.score}`;
+                    let gMenu = document.getElementById('gameOverMenu'); if (gMenu) gMenu.style.display = 'flex';
                 } else {
-                    // Após 3s do grito, joga a raquete pro meio e exibe "PREPARE-SE" por 4 segundos
                     this.resetBall('respawn'); 
                 }
             }
@@ -480,9 +353,7 @@ export class Game {
 
         if (this.gigaBallTimer > 0) {
             this.gigaBallTimer--;
-            if (this.gigaBallTimer <= 0) {
-                this.applyBallSizeOption();
-            }
+            if (this.gigaBallTimer <= 0) { this.applyBallSizeOption(); }
         }
 
         for (let bIndex = this.balls.length - 1; bIndex >= 0; bIndex--) {
@@ -509,17 +380,12 @@ export class Game {
 
                 if (this.electricShieldActive && ball.y + ball.radius >= this.shieldY) { ball.dy = -Math.abs(ball.dy); this.electricShieldActive = false; playSound('shield'); }
 
-                // COLISÃO MORTE
                 if (ball.y + ball.radius > this.canvas.height) {
                     this.balls.splice(bIndex, 1);
-                    
                     if (this.balls.length === 0 && !this.deathPauseActive) {
                         playMp3('src/assets/scream1.mp3'); 
                         this.lives--;
                         this.updateHUD(); 
-
-                        // Paralisa a raquete na posição onde o jogador errou a bola
-                        // Aguarda exatos 3 Segundos (180 frames) 
                         this.deathPauseActive = true;
                         this.deathPauseTimer = 180; 
                     }
@@ -613,7 +479,6 @@ export class Game {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         if (this.hexPattern) { this.ctx.fillStyle = this.hexPattern; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); }
-
         this.ctx.fillStyle = '#444'; this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
 
         if (this.electricShieldActive) {
@@ -625,7 +490,7 @@ export class Game {
 
         if (this.warpDoorActive) {
             this.ctx.shadowBlur = 12; this.ctx.shadowColor = '#00FFFF'; this.ctx.strokeStyle = '#00FFFF'; this.ctx.lineWidth = 2; this.ctx.fillStyle = '#FF8C00';
-            this.drawRoundedRect(this.canvas.width - 10, this.paddle.y - 18, 10, 45, 4);
+            drawRoundedRect(this.ctx, this.canvas.width - 10, this.paddle.y - 18, 10, 45, 4);
             this.ctx.beginPath(); this.ctx.moveTo(this.canvas.width - 5, this.paddle.y - 18);
             for (let py = this.paddle.y - 18; py <= this.paddle.y + 27; py += 6) { let rx = (this.canvas.width - 5) + (Math.random() - 0.5) * 6; this.ctx.lineTo(rx, py); }
             this.ctx.stroke(); this.ctx.shadowBlur = 0;
@@ -638,7 +503,7 @@ export class Game {
             this.ctx.shadowBlur = 0;
         } else {
             this.ctx.fillStyle = '#ffffff';
-            this.drawRoundedRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 6);
+            drawRoundedRect(this.ctx, this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 6);
         }
 
         this.ctx.fillStyle = '#ffffff';
@@ -647,7 +512,7 @@ export class Game {
         });
 
         this.bricks.forEach(b => {
-            if (b.status === 1) { this.ctx.fillStyle = b.color; this.drawRoundedRect(b.x, b.y, this.brickW, this.brickH, 4); }
+            if (b.status === 1) { this.ctx.fillStyle = b.color; drawRoundedRect(this.ctx, b.x, b.y, this.brickW, this.brickH, 4); }
         });
 
         this.bonuses.forEach(b => {
@@ -661,11 +526,10 @@ export class Game {
             else if (b.type === 'P') { capColor = '#006400'; textColor = '#FFFFFF'; }
             else if (b.type === 'B') { capColor = '#FF8C00'; textColor = '#FFFFFF'; }
 
-            this.ctx.fillStyle = capColor; this.drawRoundedRect(b.x, b.y, 24, 24, 6);
+            this.ctx.fillStyle = capColor; drawRoundedRect(this.ctx, b.x, b.y, 24, 24, 6);
             this.ctx.fillStyle = textColor; this.ctx.font = 'bold 16px Arial'; this.ctx.fillText(b.type, b.x + 6, b.y + 18);
         });
 
-        // DESENHO EXCLUSIVO PARA AS MENSAGENS E ESTADOS (APENAS 1 TEXTO POR VEZ)
         let overlayActive = this.levelIntroActive || this.prepareActive;
         
         if (overlayActive && !this.deathPauseActive) {
