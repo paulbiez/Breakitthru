@@ -5,19 +5,28 @@ import { initInputs } from './input.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
+
     const game = new Game(canvas);
     let wasRunningBeforeRotation = false;
     let settingsBackup = null;
 
-    // Atualiza o texto do botão de seleção com o nível inicial (Fase 1)
+    // Garantia estrita de número válido para a fase inicial
+    let validLevel = parseInt(game.currentLevel, 10);
+    if (isNaN(validLevel) || validLevel < 1) {
+        validLevel = 1;
+        game.currentLevel = 1;
+    }
+
     const selectBtn = document.getElementById('selectLevelBtn');
     if (selectBtn) {
-        selectBtn.innerText = `Selecionar Fase: ${game.currentLevel}`;
+        selectBtn.innerText = `Selecionar Fase: ${validLevel}`;
     }
 
     const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
-        game.currentLevel = level;
-        if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${level}`;
+        let selected = parseInt(level, 10) || 1;
+        game.currentLevel = selected;
+        if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${selected}`;
     });
 
     initInputs(canvas, game.paddle, 
@@ -38,13 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
 
-    document.getElementById('btnStart').addEventListener('click', () => {
-        game.startGame();
-    });
+    const btnStart = document.getElementById('btnStart');
+    if (btnStart) {
+        btnStart.addEventListener('click', () => {
+            game.startGame();
+        });
+    }
 
     if (selectBtn) {
         selectBtn.addEventListener('click', () => {
-            picker.open(game.currentLevel);
+            picker.open(game.currentLevel || 1);
         });
     }
 
@@ -85,11 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('btnSettings').addEventListener('click', () => {
-        settingsBackup = game.backupSettings();
-        hideAllMenus();
-        document.getElementById('settingsMenu').style.display = 'flex';
-    });
+    const btnSettings = document.getElementById('btnSettings');
+    if (btnSettings) {
+        btnSettings.addEventListener('click', () => {
+            settingsBackup = game.backupSettings();
+            hideAllMenus();
+            document.getElementById('settingsMenu').style.display = 'flex';
+        });
+    }
 
     const saveBtn = document.getElementById('btnSettingsSave');
     if (saveBtn) {
@@ -111,17 +126,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('btnSettingsPaddle').addEventListener('click', () => {
-        hideAllMenus();
-        document.getElementById('settingsPaddleMenu').style.display = 'flex';
-        updatePreviewPaddle(game.paddleSizeOption);
-        highlightActiveOptions('btn-paddle-size', game.paddleSizeOption, 'data-size');
-    });
+    const btnPaddle = document.getElementById('btnSettingsPaddle');
+    if (btnPaddle) {
+        btnPaddle.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('settingsPaddleMenu').style.display = 'flex';
+            updatePreviewPaddle(game.paddleSizeOption);
+            highlightActiveOptions('btn-paddle-size', game.paddleSizeOption, 'data-size');
+        });
+    }
 
-    document.getElementById('btnPaddleBack').addEventListener('click', () => {
-        hideAllMenus();
-        document.getElementById('settingsMenu').style.display = 'flex';
-    });
+    const btnPaddleBack = document.getElementById('btnPaddleBack');
+    if (btnPaddleBack) {
+        btnPaddleBack.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('settingsMenu').style.display = 'flex';
+        });
+    }
 
     document.querySelectorAll('.btn-paddle-size').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -132,16 +153,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('btnSettingsBallSpeed').addEventListener('click', () => {
-        hideAllMenus();
-        document.getElementById('settingsBallSpeedMenu').style.display = 'flex';
-        highlightActiveOptions('btn-ball-speed', game.ballSpeedOption, 'data-speed');
-    });
+    const btnSpeed = document.getElementById('btnSettingsBallSpeed');
+    if (btnSpeed) {
+        btnSpeed.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('settingsBallSpeedMenu').style.display = 'flex';
+            highlightActiveOptions('btn-ball-speed', game.ballSpeedOption, 'data-speed');
+        });
+    }
 
-    document.getElementById('btnSpeedBack').addEventListener('click', () => {
-        hideAllMenus();
-        document.getElementById('settingsMenu').style.display = 'flex';
-    });
+    const btnSpeedBack = document.getElementById('btnSpeedBack');
+    if (btnSpeedBack) {
+        btnSpeedBack.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('settingsMenu').style.display = 'flex';
+        });
+    }
 
     document.querySelectorAll('.btn-ball-speed').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -151,17 +178,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('btnSettingsBallSize').addEventListener('click', () => {
-        hideAllMenus();
-        document.getElementById('settingsBallSizeMenu').style.display = 'flex';
-        updatePreviewBall(game.ballSizeOption);
-        highlightActiveOptions('btn-ball-size', game.ballSizeOption, 'data-size');
-    });
+    const btnBallSize = document.getElementById('btnSettingsBallSize');
+    if (btnBallSize) {
+        btnBallSize.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('settingsBallSizeMenu').style.display = 'flex';
+            updatePreviewBall(game.ballSizeOption);
+            highlightActiveOptions('btn-ball-size', game.ballSizeOption, 'data-size');
+        });
+    }
 
-    document.getElementById('btnSizeBack').addEventListener('click', () => {
-        hideAllMenus();
-        document.getElementById('settingsMenu').style.display = 'flex';
-    });
+    const btnSizeBack = document.getElementById('btnSizeBack');
+    if (btnSizeBack) {
+        btnSizeBack.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('settingsMenu').style.display = 'flex';
+        });
+    }
 
     document.querySelectorAll('.btn-ball-size').forEach(btn => {
         btn.addEventListener('click', () => {

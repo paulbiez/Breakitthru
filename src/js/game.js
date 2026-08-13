@@ -15,18 +15,18 @@ export class Game {
         this.INITIAL_LIVES = 5;
         this.TOTAL_LEVELS = TOTAL_LEVELS;
 
+        // Inicialização explícita e imutável para evitar NaN
+        this.currentLevel = 1; 
+        this.score = 0;
+        this.lives = this.INITIAL_LIVES;
+        this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
+
         this.baseWidth = 90;
         this.paddle = { x: 155, y: 520, width: 90, height: 12, glue: false };
         this.balls = [];
         this.bricks = [];
         this.bonuses = [];
 
-        this.score = 0;
-        this.lives = this.INITIAL_LIVES;
-        this.currentLevel = 1; // CORREÇÃO CRÍTICA: Previne o erro NaN
-        this.highScore = parseInt(localStorage.getItem('breakout_highscore')) || 0;
-
-        // Configurações
         this.paddleSizeOption = 'large'; 
         this.ballSpeedOption = 'fast';   
         this.ballSizeOption = 'normal';  
@@ -38,7 +38,6 @@ export class Game {
         this.electricShieldActive = false;
         this.shieldY = 580;
 
-        // Timers em Frames (60 FPS)
         this.deathPauseActive = false;
         this.deathPauseTimer = 0;
         this.levelIntroActive = false;
@@ -357,7 +356,6 @@ export class Game {
 
         let isPausedForIntro = false;
 
-        // Pausa de 3 segundos com congelamento total na morte
         if (this.deathPauseActive) {
             this.deathPauseTimer--;
             if (this.deathPauseTimer <= 0) {
@@ -454,7 +452,7 @@ export class Game {
                         this.lives--;
                         this.updateHUD(); 
                         this.deathPauseActive = true;
-                        this.deathPauseTimer = 180; // 3 Segundos congelado
+                        this.deathPauseTimer = 180; 
                     }
                     continue;
                 }
