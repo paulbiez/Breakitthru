@@ -168,19 +168,31 @@ export class Game {
             for (let c = 0; c < pattern[r].length; c++) {
                 let val = pattern[r][c];
                 if (val > 0) {
-                    let brickTypeIndex = r % BRICK_TYPES.length;
-                    let type = BRICK_TYPES[brickTypeIndex];
-                    let hits = 1; let color = type.color; let points = type.points; let indestructible = false;
-
-                    if (val === 2) { color = '#FFD700'; points = 100; }
-                    else if (val === 3) { color = '#AAAAAA'; hits = 3; points = 15; }
-                    else if (val === 4) { color = '#FFD700'; hits = 4; points = 100; }
-                    else if (val === 5) { color = '#E0E0E0'; hits = Infinity; points = 0; indestructible = true; }
+                    let isMoving = false;
+                    let isBumper = false;
+                    let hits = 1; let color = '#FFFFFF'; let points = 10; let indestructible = false;
+                    
+                    // Identificação dos novos blocos
+                    if (val === 6) { color = '#FF00FF'; points = 50; isMoving = true; hits = 2; }
+                    else if (val === 7) { color = '#00FF00'; points = 150; indestructible = true; isBumper = true; }
+                    else {
+                        let brickTypeIndex = r % BRICK_TYPES.length;
+                        let type = BRICK_TYPES[brickTypeIndex];
+                        color = type.color; points = type.points;
+                        if (val === 2) { color = '#FFD700'; points = 100; }
+                        else if (val === 3) { color = '#AAAAAA'; hits = 3; points = 15; }
+                        else if (val === 4) { color = '#FFD700'; hits = 4; points = 100; }
+                        else if (val === 5) { color = '#E0E0E0'; hits = Infinity; points = 0; indestructible = true; }
+                    }
 
                     this.bricks.push({
                         x: startX + c * (this.brickW + this.padding),
                         y: this.topWallY + 35 + r * (this.brickH + this.padding),
-                        status: 1, hits: hits, maxHits: hits, color: color, points: points, indestructible: indestructible, hasCapsule: false
+                        w: this.brickW, h: this.brickH, // Armazena as proporções originais
+                        startX: startX + c * (this.brickW + this.padding), // Âncora para patrulha
+                        moveDir: 1, speed: 1.5,
+                        status: 1, hits: hits, maxHits: hits, color: color, points: points, indestructible: indestructible, hasCapsule: false,
+                        isMoving: isMoving, isBumper: isBumper
                     });
                 }
             }
@@ -351,11 +363,23 @@ export class Game {
             return; 
         }
 
+        // --- ATUALIZAÇÕES DINÂMICAS ---
         if (this.gigaBallTimer > 0) {
             this.gigaBallTimer--;
             if (this.gigaBallTimer <= 0) { this.applyBallSizeOption(); }
         }
 
+        // Move blocos de patrulha
+        this.bricks.forEach(b => {
+            if (b.status === 1 && b.isMoving) {
+                b.x += b.speed * b.moveDir;
+                if (b.x > b.startX + 40 || b.x < b.startX - 40) {
+                    b.moveDir *= -1;
+                }
+            }
+        });
+
+        // --- FÍSICA E COLISÃO ---
         for (let bIndex = this.balls.length - 1; bIndex >= 0; bIndex--) {
             let ball = this.balls[bIndex];
             if (!ball) continue;
@@ -382,7 +406,11 @@ export class Game {
 
                 if (ball.y + ball.radius > this.canvas.height) {
                     this.balls.splice(bIndex, 1);
+                    
                     if (this.balls.length === 0 && !this.deathPauseActive) {
+                        // LIMPEZA IMEDIATA DOS POWER UPS NO AR
+                        this.bonuses = []; 
+                        
                         playMp3('src/assets/scream1.mp3'); 
                         this.lives--;
                         this.updateHUD(); 
@@ -394,21 +422,43 @@ export class Game {
 
                 this.bricks.forEach(b => {
                     if (b.status === 1) {
-                        if (isColliding(ball, { x: b.x, y: b.y, w: this.brickW, h: this.brickH })) {
-                            resolveBrickCollision(ball, b, this.brickW, this.brickH);
-                            playSound('brick');
+                        if (b.isBumper) {
+                            // COLISÃO CIRCULAR E RADIAL NO BUMPER
+                            let cx = b.x + b.w / 2;
+                            let cy = b.y + b.h / 2;
+                            let radius = b.w / 2; 
+                            let dx = ball.x - cx;
+                            let dy = ball.y - cy;
+                            let dist = Math.sqrt(dx*dx + dy*dy);
+                            
+                            if (dist < ball.radius + radius) {
+                                let nx = dx / dist;
+                                let ny = dy / dist;
+                                let currentSpeed = Math.sqrt(ball.dx*ball.dx + ball.dy*ball.dy);
+                                let newSpeed = Math.min(currentSpeed * 1.25, 8.0); // Boost de velocidade limitado
+                                
+                                ball.dx = nx * newSpeed;
+                                ball.dy = ny * newSpeed;
+                                playSound('bumper'); 
+                            }
+                        } else {
+                            // COLISÃO AABB TRADICIONAL
+                            if (isColliding(ball, { x: b.x, y: b.y, w: b.w, h: b.h })) {
+                                resolveBrickCollision(ball, b, b.w, b.h);
+                                playSound('brick');
 
-                            if (!b.indestructible) {
-                                b.hits--;
-                                if (b.hits <= 0) {
-                                    b.status = 0; this.score += b.points; this.updateHUD();
-                                    if (b.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
-                                        let capType = this.getDeterministicCapsule();
-                                        this.bonuses.push({ x: b.x + this.brickW / 2 - 12, y: b.y, type: capType, speed: 2 });
-                                        this.isCapsuleOnScreen = true;
+                                if (!b.indestructible) {
+                                    b.hits--;
+                                    if (b.hits <= 0) {
+                                        b.status = 0; this.score += b.points; this.updateHUD();
+                                        if (b.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
+                                            let capType = this.getDeterministicCapsule();
+                                            this.bonuses.push({ x: b.x + b.w / 2 - 12, y: b.y, type: capType, speed: 2 });
+                                            this.isCapsuleOnScreen = true;
+                                        }
+                                    } else {
+                                        if (b.hits === 3) b.color = '#888888'; if (b.hits === 2) b.color = '#666666'; if (b.hits === 1) b.color = '#444444';
                                     }
-                                } else {
-                                    if (b.hits === 3) b.color = '#888888'; if (b.hits === 2) b.color = '#666666'; if (b.hits === 1) b.color = '#444444';
                                 }
                             }
                         }
@@ -512,7 +562,18 @@ export class Game {
         });
 
         this.bricks.forEach(b => {
-            if (b.status === 1) { this.ctx.fillStyle = b.color; drawRoundedRect(this.ctx, b.x, b.y, this.brickW, this.brickH, 4); }
+            if (b.status === 1) { 
+                if (b.isBumper) {
+                    this.ctx.fillStyle = b.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(b.x + b.w/2, b.y + b.h/2, b.w/2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.strokeStyle = '#FFFFFF';
+                    this.ctx.stroke();
+                } else {
+                    this.ctx.fillStyle = b.color; drawRoundedRect(this.ctx, b.x, b.y, b.w, b.h, 4); 
+                }
+            }
         });
 
         this.bonuses.forEach(b => {

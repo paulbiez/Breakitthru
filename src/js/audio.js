@@ -1,25 +1,15 @@
 // src/js/audio.js
-
 let audioCtx = null;
 
 export function initAudio() {
     try {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        // Resumo necessário para navegadores modernos (especialmente Chrome/Firefox)
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume().catch(e => console.warn("Audio resume falhou", e));
-        }
-    } catch(e) {
-        console.warn("AudioContext não suportado ou bloqueado:", e);
-    }
+        if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        if (audioCtx.state === 'suspended') { audioCtx.resume().catch(e => console.warn("Audio resume falhou", e)); }
+    } catch(e) { console.warn("AudioContext não suportado ou bloqueado:", e); }
 }
 
-// Para efeitos sonoros sintéticos (raquete, tijolos, etc.)
 export function playSound(type) {
     if (!audioCtx || audioCtx.state !== 'running') return;
-    
     try {
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
@@ -64,22 +54,23 @@ export function playSound(type) {
             gain.gain.setValueAtTime(0.2, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
             duration = 0.4;
+        } else if (type === 'bumper') { // Novo som de mola pro Bumper
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            duration = 0.15;
         }
         
         osc.start(now);
         osc.stop(now + duration);
-    } catch(e) {
-        console.warn("Erro ao reproduzir som sintético:", e);
-    }
+    } catch(e) { console.warn("Erro ao reproduzir som sintético:", e); }
 }
 
-// Para arquivos de áudio externos (ex: scream1.mp3)
 export function playMp3(filePath) {
     try {
         let audio = new Audio(filePath);
-        // Garante que o áudio seja reproduzido com permissão
         audio.play().catch(e => console.warn("Erro ao reproduzir MP3:", e));
-    } catch(e) {
-        console.warn("Erro ao carregar arquivo MP3:", e);
-    }
+    } catch(e) { console.warn("Erro ao carregar arquivo MP3:", e); }
 }
