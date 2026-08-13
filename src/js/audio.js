@@ -54,7 +54,7 @@ export function playSound(type) {
             gain.gain.setValueAtTime(0.2, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
             duration = 0.4;
-        } else if (type === 'bumper') { // Novo som de mola pro Bumper
+        } else if (type === 'bumper') { // Som de Bumper estilo Pinball
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(150, now);
             osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);

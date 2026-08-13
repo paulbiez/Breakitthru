@@ -1,9 +1,7 @@
 // src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
 import { playSound, initAudio, playMp3 } from './audio.js';
-import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS } from './config.js';
-import { getLevelPattern } from './levels.js';
-import { drawRoundedRect, generateHexPattern } from './graphics.js';
+import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 
 export class Game {
     constructor(canvas) {
@@ -147,6 +145,38 @@ export class Game {
         if (this.gigaBallTimeout) { clearTimeout(this.gigaBallTimeout); this.gigaBallTimeout = null; }
     }
 
+    generateLevelPattern(level, customColors = null) {
+        let colors = customColors || LEVEL_BACKGROUNDS[(level - 1) % LEVEL_BACKGROUNDS.length];
+        let patternCanvas = document.createElement('canvas');
+        let pCtx = patternCanvas.getContext('2d');
+        patternCanvas.width = 16; patternCanvas.height = 28;
+
+        pCtx.fillStyle = colors.bg; pCtx.fillRect(0, 0, 16, 28);
+        pCtx.strokeStyle = colors.stroke; pCtx.lineWidth = 1; pCtx.fillStyle = colors.hexFill;
+
+        for (let y = -7; y < 35; y += 14) {
+            for (let x = -8; x < 24; x += 16) {
+                let offX = (Math.floor(y / 14) % 2 === 0) ? 0 : 8;
+                pCtx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    let angle = (Math.PI / 3) * i;
+                    let hx = (x + offX) + 6 * Math.cos(angle);
+                    let hy = y + 6 * Math.sin(angle);
+                    if (i === 0) pCtx.moveTo(hx, hy); else pCtx.lineTo(hx, hy);
+                }
+                pCtx.closePath(); pCtx.fill(); pCtx.stroke();
+            }
+        }
+        this.hexPattern = this.ctx.createPattern(patternCanvas, 'repeat');
+    }
+
+    drawRoundedRect(x, y, w, h, radius) {
+        this.ctx.beginPath();
+        if (this.ctx.roundRect) { this.ctx.roundRect(x, y, w, h, radius); } 
+        else { this.ctx.moveTo(x + radius, y); this.ctx.arcTo(x + w, y, x + w, y + h, radius); this.ctx.arcTo(x + w, y + h, x, y + h, radius); this.ctx.arcTo(x, y + h, x, y, radius); this.ctx.arcTo(x, y, x + w, y, radius); }
+        this.ctx.fill();
+    }
+
     initLevel(level) {
         this.bricks = [];
         this.bonuses = [];
@@ -156,23 +186,80 @@ export class Game {
         this.warpAnimationActive = false;
         this.deathPauseActive = false;
 
-        this.hexPattern = generateHexPattern(this.ctx, level);
+        this.generateLevelPattern(level);
         playSound('introJingle');
-        this.levelIntroActive = true;
-        this.levelIntroTimer = 120;
 
         const startX = (this.canvas.width - (this.brickCols * (this.brickW + this.padding))) / 2;
-        let pattern = getLevelPattern(level);
+        let pattern = [];
+
+        if (level === 1) {
+            pattern = [
+                [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1]
+            ];
+        } else if (level === 2) {
+            pattern = [
+                [1,1,1, 0, 1,0,0,0,1], 
+                [1,0,0, 0, 1,1,0,1,1], 
+                [1,0,0, 7, 1,0,1,0,1], // 7 = BUMPER PINBALL
+                [1,0,0, 0, 1,0,1,0,1], 
+                [1,0,0, 0, 1,0,0,0,1], 
+                [1,0,0, 0, 1,0,0,0,1], 
+                [1,1,1, 0, 1,0,0,0,1]
+            ];
+        } else if (level === 3) {
+            pattern = [ [0,1,1,1,1,1,1,0,0], [1,1,0,0,0,0,0,0,0], [1,0,0,0,0,0,0,0,0], [1,0,0,0,0,0,0,0,0], [1,1,0,0,0,0,0,0,0], [0,1,1,1,1,1,1,0,0] ];
+        } else if (level === 4) {
+            pattern = [ [1,0,0,0,0,0,0,0,1], [1,1,0,0,0,0,0,1,1], [1,0,1,0,0,0,1,0,1], [1,0,0,1,0,1,0,0,1], [1,0,0,0,1,0,0,0,1], [1,0,0,0,0,0,0,0,1] ];
+        } else if (level === 5) {
+            pattern = [ [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1] ];
+        } else if (level === 6) {
+            pattern = [ [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [1,0,0,0,1,0,0,0,1], [1,0,0,1,0,1,0,0,1], [1,0,1,0,0,0,1,0,1], [1,1,0,0,0,0,0,1,1] ];
+        } else if (level === 7) {
+            pattern = [ [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,3,1,1,0,0], [0,1,1,1,1,1,1,1,0], [0,0,1,1,3,1,1,0,0], [0,0,0,1,1,1,0,0,0], [0,0,0,0,1,0,0,0,0] ];
+        } else if (level === 8) {
+            pattern = [ [5,0,0,5, 0, 0,0,0,0], [5,1,1,5, 0, 0,0,0,0], [5,5,5,5, 0, 5,0,0,5], [0,0,0,0, 0, 5,1,1,5], [0,0,0,0, 0, 5,5,5,5], [0,0, 5,0,0,5, 0,0,0], [0,0, 5,1,1,5, 0,0,0], [0,0, 5,5,5,5, 0,0,0] ];
+        } else if (level === 9) {
+            pattern = [ [0,0,1,1,1,1,1,0,0], [0,1,0,0,0,0,0,1,0], [1,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,1], [0,1,0,0,0,0,0,1,0], [0,0,1,1,1,1,1,0,0] ];
+        } else if (level === 10) {
+            pattern = [ [3,3,3,3,3,3,3,3,3], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1], [4,4,4,4,4,4,4,4,4] ];
+        } else if (level === 11) {
+            pattern = [ [5,0,0,0,0,0,0,0,5], [0,5,0,0,0,0,0,5,0], [0,0,5,1,1,1,5,0,0], [0,0,1,5,1,5,1,0,0], [0,0,1,1,3,1,1,0,0], [0,0,1,5,1,5,1,0,0], [0,0,5,1,1,1,5,0,0], [0,5,0,0,0,0,0,5,0], [5,0,0,0,0,0,0,0,5] ];
+        } else if (level === 12) {
+            pattern = [ [1,0,0,0,1,0,0,0,1], [1,1,0,1,1,1,0,1,1], [0,1,1,1,1,1,1,1,0], [0,0,1,1,1,1,1,0,0], [0,0,0,1,1,1,0,0,0] ];
+        } else if (level === 13) {
+            pattern = [ [0,0,0,1,1,1,0,0,0], [0,0,1,1,3,1,1,0,0], [0,1,1,3,4,3,1,1,0], [0,0,1,1,3,1,1,0,0], [0,0,0,1,1,1,0,0,0], [0,0,0,0,3,0,0,0,0], [0,0,0,0,3,0,0,0,0] ];
+        } else if (level === 14) {
+            pattern = [ [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,1,1,1,0,0], [1,1,1,1,1,1,1,1,1], [0,0,0,1,1,1,0,0,0], [0,0,1,0,0,0,1,0,0], [0,1,0,0,0,0,0,1,0] ];
+        } else if (level === 15) {
+            pattern = [
+                [0,0,1,1,1,1,1,0,0], 
+                [0,1,1,1,1,1,1,1,0], 
+                [1,1,1,1,0,0,1,1,1], 
+                [6,0,0,0,0,0,0,0,6], // 6 = BLOCOS MÓVEIS
+                [0,1,1,1,1,1,1,1,0], 
+                [0,0,1,1,1,1,1,0,0]
+            ];
+        } else if (level === 16) {
+            pattern = [ [0,0,0,0,1,0,0,0,0], [0,0,0,1,1,1,0,0,0], [0,0,1,1,1,1,1,0,0], [0,1,1,1,1,1,1,1,0], [1,1,1,1,1,1,1,1,1], [5,5,5,5,5,5,5,5,5] ];
+        } else if (level === 17) {
+            pattern = [ [1,0,1,0,1,0,1,0,1], [1,0,1,0,1,0,1,0,1], [3,0,3,0,3,0,3,0,3], [3,0,3,0,3,0,3,0,3], [1,0,1,0,1,0,1,0,1], [1,0,1,0,1,0,1,0,1] ];
+        } else if (level === 18) {
+            pattern = [ [1,1,1,0,1,0,1,1,1], [1,0,0,0,1,0,0,0,1], [1,0,1,1,1,1,1,0,1], [1,0,0,0,0,0,0,0,1], [1,1,1,0,5,0,1,1,1], [0,0,0,0,5,0,0,0,0] ];
+        } else if (level === 19) {
+            pattern = [ [1,1,0,0,0,0,0,1,1], [1,1,1,0,0,0,1,1,1], [0,1,1,1,0,1,1,1,0], [0,0,1,1,1,1,1,0,0], [0,0,0,1,1,1,0,0,0] ];
+        } else if (level === 20) {
+            pattern = [ [0,0,3,3,3,3,3,0,0], [0,3,4,4,4,4,4,3,0], [3,4,4,3,0,0,0,0,0], [3,4,3,0,0,0,0,0,0], [3,4,4,3,0,0,0,0,0], [0,3,4,4,4,4,4,3,0], [0,0,3,3,3,3,3,0,0] ];
+        } else {
+            for (let r = 0; r < 6; r++) pattern.push([1,1,1,1,1,1,1,1,1]);
+        }
 
         for (let r = 0; r < pattern.length; r++) {
             for (let c = 0; c < pattern[r].length; c++) {
                 let val = pattern[r][c];
                 if (val > 0) {
-                    let isMoving = false;
-                    let isBumper = false;
+                    let isMoving = false; let isBumper = false;
                     let hits = 1; let color = '#FFFFFF'; let points = 10; let indestructible = false;
                     
-                    // Identificação dos novos blocos
                     if (val === 6) { color = '#FF00FF'; points = 50; isMoving = true; hits = 2; }
                     else if (val === 7) { color = '#00FF00'; points = 150; indestructible = true; isBumper = true; }
                     else {
@@ -188,8 +275,8 @@ export class Game {
                     this.bricks.push({
                         x: startX + c * (this.brickW + this.padding),
                         y: this.topWallY + 35 + r * (this.brickH + this.padding),
-                        w: this.brickW, h: this.brickH, // Armazena as proporções originais
-                        startX: startX + c * (this.brickW + this.padding), // Âncora para patrulha
+                        w: this.brickW, h: this.brickH,
+                        startX: startX + c * (this.brickW + this.padding),
                         moveDir: 1, speed: 1.5,
                         status: 1, hits: hits, maxHits: hits, color: color, points: points, indestructible: indestructible, hasCapsule: false,
                         isMoving: isMoving, isBumper: isBumper
@@ -229,10 +316,10 @@ export class Game {
 
         if (reason === 'intro') {
             this.levelIntroActive = true;
-            this.levelIntroTimer = 120;
+            this.levelIntroTimer = 120; // 2 segundos
         } else if (reason === 'respawn') {
             this.prepareActive = true;
-            this.prepareTimer = 240; 
+            this.prepareTimer = 240; // 4 segundos
         } else {
             this.launchBalls();
         }
@@ -278,7 +365,11 @@ export class Game {
             let stroboscopicTimer = Math.floor(elapsed / 100);
             let randomBg = { bg: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 12%)`, stroke: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 50%)`, hexFill: `hsl(${(stroboscopicTimer * 30) % 360}, 100%, 25%)` };
             
-            this.ctx.fillStyle = generateHexPattern(this.ctx, 20, randomBg); 
+            let pCanvas = document.createElement('canvas'); let pCtx = pCanvas.getContext('2d');
+            pCanvas.width = 16; pCanvas.height = 28; pCtx.fillStyle = randomBg.bg; pCtx.fillRect(0,0,16,28); pCtx.strokeStyle = randomBg.stroke; pCtx.fillStyle = randomBg.hexFill;
+            for(let y=-7; y<35; y+=14){ for(let x=-8; x<24; x+=16){ let offX=(Math.floor(y/14)%2===0)?0:8; pCtx.beginPath(); for(let i=0; i<6; i++){ let a=(Math.PI/3)*i; let hx=(x+offX)+6*Math.cos(a); let hy=y+6*Math.sin(a); i===0?pCtx.moveTo(hx,hy):pCtx.lineTo(hx,hy); } pCtx.closePath(); pCtx.fill(); pCtx.stroke(); } }
+            
+            this.ctx.fillStyle = this.ctx.createPattern(pCanvas, 'repeat');
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.fillStyle = '#444'; this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
 
@@ -299,7 +390,7 @@ export class Game {
             }
 
             let shake = (Math.random() - 0.5) * 4;
-            this.ctx.fillStyle = '#FFFFFF'; drawRoundedRect(this.ctx, this.paddle.x + shake, this.paddle.y, this.paddle.width, this.paddle.height, 6);
+            this.ctx.fillStyle = '#FFFFFF'; this.drawRoundedRect(this.paddle.x + shake, this.paddle.y, this.paddle.width, this.paddle.height, 6);
 
             if (elapsed < duration) requestAnimationFrame(victoryLoop);
             else { document.getElementById('winScore').innerText = `Pontos Totais: ${this.score}`; document.getElementById('winOverlay').style.display = 'flex'; }
@@ -363,13 +454,11 @@ export class Game {
             return; 
         }
 
-        // --- ATUALIZAÇÕES DINÂMICAS ---
         if (this.gigaBallTimer > 0) {
             this.gigaBallTimer--;
             if (this.gigaBallTimer <= 0) { this.applyBallSizeOption(); }
         }
 
-        // Move blocos de patrulha
         this.bricks.forEach(b => {
             if (b.status === 1 && b.isMoving) {
                 b.x += b.speed * b.moveDir;
@@ -379,7 +468,6 @@ export class Game {
             }
         });
 
-        // --- FÍSICA E COLISÃO ---
         for (let bIndex = this.balls.length - 1; bIndex >= 0; bIndex--) {
             let ball = this.balls[bIndex];
             if (!ball) continue;
@@ -408,9 +496,7 @@ export class Game {
                     this.balls.splice(bIndex, 1);
                     
                     if (this.balls.length === 0 && !this.deathPauseActive) {
-                        // LIMPEZA IMEDIATA DOS POWER UPS NO AR
                         this.bonuses = []; 
-                        
                         playMp3('src/assets/scream1.mp3'); 
                         this.lives--;
                         this.updateHUD(); 
@@ -423,26 +509,22 @@ export class Game {
                 this.bricks.forEach(b => {
                     if (b.status === 1) {
                         if (b.isBumper) {
-                            // COLISÃO CIRCULAR E RADIAL NO BUMPER
-                            let cx = b.x + b.w / 2;
-                            let cy = b.y + b.h / 2;
-                            let radius = b.w / 2; 
-                            let dx = ball.x - cx;
-                            let dy = ball.y - cy;
+                            let cx = b.x + b.w / 2; let cy = b.y + b.h / 2; let radius = b.w / 2;
+                            let dx = ball.x - cx; let dy = ball.y - cy;
                             let dist = Math.sqrt(dx*dx + dy*dy);
-                            
                             if (dist < ball.radius + radius) {
-                                let nx = dx / dist;
-                                let ny = dy / dist;
+                                if (dist === 0) { dx = 1; dist = 1; }
+                                let nx = dx / dist; let ny = dy / dist;
                                 let currentSpeed = Math.sqrt(ball.dx*ball.dx + ball.dy*ball.dy);
-                                let newSpeed = Math.min(currentSpeed * 1.25, 8.0); // Boost de velocidade limitado
-                                
-                                ball.dx = nx * newSpeed;
-                                ball.dy = ny * newSpeed;
-                                playSound('bumper'); 
+                                let newSpeed = Math.min(currentSpeed * 1.25, 8.0);
+                                ball.dx = nx * newSpeed; ball.dy = ny * newSpeed;
+
+                                // BLINDAGEM CONTRA CONGELAMENTO: Empurra a bola pra fora para impedir loop infinito
+                                let overlap = (ball.radius + radius) - dist + 1;
+                                ball.x += nx * overlap; ball.y += ny * overlap;
+                                playSound('bumper');
                             }
                         } else {
-                            // COLISÃO AABB TRADICIONAL
                             if (isColliding(ball, { x: b.x, y: b.y, w: b.w, h: b.h })) {
                                 resolveBrickCollision(ball, b, b.w, b.h);
                                 playSound('brick');
@@ -540,7 +622,7 @@ export class Game {
 
         if (this.warpDoorActive) {
             this.ctx.shadowBlur = 12; this.ctx.shadowColor = '#00FFFF'; this.ctx.strokeStyle = '#00FFFF'; this.ctx.lineWidth = 2; this.ctx.fillStyle = '#FF8C00';
-            drawRoundedRect(this.ctx, this.canvas.width - 10, this.paddle.y - 18, 10, 45, 4);
+            this.drawRoundedRect(this.canvas.width - 10, this.paddle.y - 18, 10, 45, 4);
             this.ctx.beginPath(); this.ctx.moveTo(this.canvas.width - 5, this.paddle.y - 18);
             for (let py = this.paddle.y - 18; py <= this.paddle.y + 27; py += 6) { let rx = (this.canvas.width - 5) + (Math.random() - 0.5) * 6; this.ctx.lineTo(rx, py); }
             this.ctx.stroke(); this.ctx.shadowBlur = 0;
@@ -553,7 +635,7 @@ export class Game {
             this.ctx.shadowBlur = 0;
         } else {
             this.ctx.fillStyle = '#ffffff';
-            drawRoundedRect(this.ctx, this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 6);
+            this.drawRoundedRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 6);
         }
 
         this.ctx.fillStyle = '#ffffff';
@@ -571,7 +653,7 @@ export class Game {
                     this.ctx.strokeStyle = '#FFFFFF';
                     this.ctx.stroke();
                 } else {
-                    this.ctx.fillStyle = b.color; drawRoundedRect(this.ctx, b.x, b.y, b.w, b.h, 4); 
+                    this.ctx.fillStyle = b.color; this.drawRoundedRect(b.x, b.y, b.w, b.h, 4); 
                 }
             }
         });
@@ -587,7 +669,7 @@ export class Game {
             else if (b.type === 'P') { capColor = '#006400'; textColor = '#FFFFFF'; }
             else if (b.type === 'B') { capColor = '#FF8C00'; textColor = '#FFFFFF'; }
 
-            this.ctx.fillStyle = capColor; drawRoundedRect(this.ctx, b.x, b.y, 24, 24, 6);
+            this.ctx.fillStyle = capColor; this.drawRoundedRect(b.x, b.y, 24, 24, 6);
             this.ctx.fillStyle = textColor; this.ctx.font = 'bold 16px Arial'; this.ctx.fillText(b.type, b.x + 6, b.y + 18);
         });
 

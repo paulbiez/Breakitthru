@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${level}`;
     });
 
-    // BLOQUEIO TOTAL: Bloqueia a raquete na Intro, no Prepare-se e no Congelamento da Morte
     initInputs(canvas, game.paddle, 
         { onLaunch: () => game.launchBalls() }, 
         () => game.levelIntroActive || game.prepareActive || game.deathPauseActive
@@ -90,25 +89,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const saveBtn = document.getElementById('btnSettingsSave');
     if (saveBtn) {
-        saveBtn.onclick = () => {
+        saveBtn.addEventListener('click', () => {
             settingsBackup = null;
             hideAllMenus();
             document.getElementById('menu').style.display = 'flex';
-        };
+        });
     }
 
     const cancelBtn = document.getElementById('btnSettingsCancel');
     if (cancelBtn) {
-        cancelBtn.onclick = () => {
+        cancelBtn.addEventListener('click', () => {
             if (settingsBackup) {
                 game.restoreSettings(settingsBackup);
             }
             hideAllMenus();
             document.getElementById('menu').style.display = 'flex';
-        };
+        });
     }
 
-    // Submenus
+    // Usando a variável 'btn' ao invés de 'e.target' garante funcionamento perfeito no Firefox
     document.getElementById('btnSettingsPaddle').addEventListener('click', () => {
         hideAllMenus();
         document.getElementById('settingsPaddleMenu').style.display = 'flex';
@@ -122,8 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('.btn-paddle-size').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            let size = e.target.getAttribute('data-size');
+        btn.addEventListener('click', () => {
+            let size = btn.getAttribute('data-size');
             game.setPaddleSize(size);
             updatePreviewPaddle(size);
             highlightActiveOptions('btn-paddle-size', size, 'data-size');
@@ -142,8 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('.btn-ball-speed').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            let speed = e.target.getAttribute('data-speed');
+        btn.addEventListener('click', () => {
+            let speed = btn.getAttribute('data-speed');
             game.setBallSpeed(speed);
             highlightActiveOptions('btn-ball-speed', speed, 'data-speed');
         });
@@ -162,8 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('.btn-ball-size').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            let size = e.target.getAttribute('data-size');
+        btn.addEventListener('click', () => {
+            let size = btn.getAttribute('data-size');
             game.setBallSize(size);
             updatePreviewBall(size);
             highlightActiveOptions('btn-ball-size', size, 'data-size');
