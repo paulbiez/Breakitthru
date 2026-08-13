@@ -4,45 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Breakout Game</title>
-<style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-    body { background: #0b0b12; color: #fff; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-    
-    #gameContainer { position: relative; width: 400px; height: 600px; background: #000; border: 4px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.9); border-radius: 8px; overflow: hidden; }
-    canvas { display: block; width: 400px; height: 600px; }
-
-    /* Overlay do HUD e Botoes In-Game */
-    #hudOverlay { position: absolute; top: 0; left: 0; width: 400px; height: 40px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; z-index: 10; pointer-events: none; }
-    .hud-text { font-size: 13px; font-weight: bold; display: flex; gap: 8px; }
-    .sound-hud-btns { display: flex; gap: 6px; pointer-events: auto; }
-    .hud-sound-btn { background: rgba(0,0,0,0.6); border: 1px solid #555; color: #fff; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    .hud-sound-btn:active { background: #444; }
-
-    /* Menus Overlay */
-    .menu-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 11, 48, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; z-index: 20; }
-    h1 { font-size: 2.2rem; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); margin-bottom: 5px; }
-    h2 { font-size: 1.4rem; color: #FFD700; margin-bottom: 8px; }
-    
-    .menu-btn { width: 220px; padding: 12px; font-size: 1rem; font-weight: bold; color: #fff; background: #1e90ff; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.1s, background 0.2s; }
-    .menu-btn:active { transform: scale(0.96); }
-    .btn-start { background: #00e600; }
-    .btn-settings { background: #ff9900; }
-    .btn-danger { background: #ff2a2a; }
-
-    /* Destaque para opção ativa nos submenus */
-    .active-option { background: #00e600 !important; border: 2px solid #ffffff !important; box-shadow: 0 0 12px rgba(0, 230, 0, 0.8); }
-
-    /* Controles de Som e Sliders - Liberado user-select para Firefox */
-    .sound-control-group { width: 240px; display: flex; flex-direction: column; gap: 6px; text-align: left; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid #333; }
-    .sound-control-group label { font-size: 0.9rem; font-weight: bold; color: #FFD700; display: flex; justify-content: space-between; }
-    
-    .sound-slider { width: 100%; height: 12px; border-radius: 6px; background: #444; outline: none; cursor: pointer; accent-color: #00e600; user-select: auto !important; -webkit-user-select: auto !important; touch-action: manipulation; }
-
-    /* Picker de Fases */
-    #iosPickerOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 30; }
-    .picker-card { background: #222; border-radius: 12px; padding: 20px; width: 260px; text-align: center; border: 1px solid #444; }
-    .picker-select { width: 100%; padding: 10px; font-size: 1.1rem; border-radius: 8px; background: #333; color: #fff; border: 1px solid #555; margin: 15px 0; outline: none; }
-</style>
+<!-- Ajuste o caminho abaixo conforme a pasta do seu projeto -->
+<link rel="stylesheet" href="style.css"> 
 </head>
 <body>
 
