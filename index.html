@@ -2,18 +2,18 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Breakout Game</title>
 
-<!-- Chamada profissional e protegida contra cache do Firefox -->
-<link rel="stylesheet" href="./style.css?v=3">
+<!-- Link com cache-busting v=4 para forçar o celular a atualizar -->
+<link rel="stylesheet" href="./style.css?v=4">
 </head>
 <body>
 
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- HUD In-Game (Botões Canto Superior Direito) -->
+    <!-- Botões Flutuantes (Canto Superior Direito) -->
     <div id="hudControls">
         <button id="btnPause" class="hud-btn" title="Pausar">⏸️</button>
         <button id="btnHudBgm" class="hud-btn" title="Música">🎵</button>

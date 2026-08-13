@@ -6,6 +6,12 @@
     -webkit-user-select: none; 
 }
 
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 body { 
     background: #0b0b12; 
     color: #fff; 
@@ -14,33 +20,38 @@ body {
     justify-content: center; 
     align-items: center; 
     min-height: 100vh; 
-    overflow: hidden; 
+    min-height: 100dvh;
+    padding: 5px;
 }
 
+/* Container Responsivo com Aspect Ratio 2:3 */
 #gameContainer { 
     position: relative; 
-    width: 400px; 
-    height: 600px; 
+    width: min(400px, 98vw); 
+    height: min(600px, calc(98vw * 1.5)); 
+    max-height: 98dvh;
+    aspect-ratio: 2 / 3;
     background: #000; 
-    border: 4px solid #333; 
+    border: 3px solid #333; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.9); 
     border-radius: 8px; 
     overflow: hidden; 
 }
 
+/* O Canvas escala perfeitamente sem perder os 400x600 internos */
 canvas { 
     display: block; 
-    width: 400px; 
-    height: 600px; 
+    width: 100%; 
+    height: 100%; 
 }
 
-/* Botões do HUD (Canto superior direito) */
+/* Botões do HUD (Canto Superior Direito) */
 #hudControls { 
     position: absolute; 
     top: 6px; 
-    right: 10px; 
+    right: 8px; 
     display: flex; 
-    gap: 6px; 
+    gap: 4px; 
     z-index: 10; 
     pointer-events: auto; 
 }
@@ -78,6 +89,7 @@ canvas {
     align-items: center; 
     gap: 12px; 
     z-index: 20; 
+    padding: 15px;
 }
 
 h1 { 
@@ -94,7 +106,7 @@ h2 {
 }
 
 .menu-btn { 
-    width: 220px; 
+    width: min(220px, 85%); 
     padding: 12px; 
     font-size: 1rem; 
     font-weight: bold; 
@@ -123,7 +135,7 @@ h2 {
 
 /* Sliders de Volume */
 .sound-control-group { 
-    width: 240px; 
+    width: min(240px, 85%); 
     display: flex; 
     flex-direction: column; 
     gap: 6px; 
@@ -173,7 +185,7 @@ h2 {
     background: #222; 
     border-radius: 12px; 
     padding: 20px; 
-    width: 260px; 
+    width: min(260px, 85%); 
     text-align: center; 
     border: 1px solid #444; 
 }
