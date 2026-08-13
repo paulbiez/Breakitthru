@@ -1,6 +1,6 @@
 // src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
-import { playSound, initAudio, playMp3 } from './audio.js';
+import { playSound, initAudio, playMp3, playBgm, pauseBgm, stopBgm } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 import { getLevelPattern } from './levels.js';
 
@@ -99,18 +99,21 @@ export class Game {
 
     startGame() {
         initAudio();
+        playBgm();
         this.gameRunning = true;
         this.score = 0;
         this.lives = 5;
-        document.querySelectorAll('#menu, #settingsMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
+        document.querySelectorAll('#menu, #settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
                 .forEach(el => el.style.display = 'none');
         this.initLevel(this.currentLevel);
         this.resetBall('intro');
+        this.updateHUD();
     }
 
     resumeGame() { 
         let pauseEl = document.getElementById('pauseMenu');
         if (pauseEl) pauseEl.style.display = 'none';
+        playBgm();
         this.gameRunning = true; 
     }
 
@@ -118,7 +121,8 @@ export class Game {
 
     quitToMainMenu() { 
         this.gameRunning = false; 
-        document.querySelectorAll('#settingsMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
+        stopBgm();
+        document.querySelectorAll('#settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
                 .forEach(el => el.style.display = 'none');
         document.getElementById('menu').style.display = 'flex';
         let btn = document.getElementById('selectLevelBtn');
@@ -129,6 +133,7 @@ export class Game {
         document.getElementById('gameOverMenu').style.display = 'none'; 
         this.lives = 3; 
         this.gameRunning = true; 
+        playBgm();
         this.resetBall('respawn'); 
         this.updateHUD(); 
     }
@@ -269,10 +274,10 @@ export class Game {
 
         if (reason === 'intro') {
             this.levelIntroActive = true;
-            this.levelIntroTimer = 120; // 2 segundos
+            this.levelIntroTimer = 120;
         } else if (reason === 'respawn') {
             this.prepareActive = true;
-            this.prepareTimer = 240; // 4 segundos
+            this.prepareTimer = 240;
         } else {
             this.launchBalls();
         }
@@ -309,6 +314,7 @@ export class Game {
 
     triggerVictoryExplosion() {
         this.victoryExplosionActive = true; this.gameRunning = false; this.balls = []; this.bonuses = [];
+        pauseBgm();
         playSound('whoosh');
         let startTime = performance.now(); let duration = 7000; let lastFireworkSpawn = 0; let fireworksParticles = [];
 
@@ -361,6 +367,7 @@ export class Game {
                 this.deathPauseActive = false;
                 if (this.lives <= 0) {
                     this.gameRunning = false;
+                    pauseBgm();
                     let gTitle = document.getElementById('gameOverTitle'); if (gTitle) gTitle.innerText = "FIM DO JOGO";
                     let fScore = document.getElementById('finalScore'); if (fScore) fScore.innerText = `Pontos Totais: ${this.score}`;
                     let gMenu = document.getElementById('gameOverMenu'); if (gMenu) gMenu.style.display = 'flex';
@@ -451,7 +458,7 @@ export class Game {
                         this.lives--;
                         this.updateHUD(); 
                         this.deathPauseActive = true;
-                        this.deathPauseTimer = 180; // 3 Segundos congelado
+                        this.deathPauseTimer = 180; 
                     }
                     continue;
                 }
