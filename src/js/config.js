@@ -1,68 +1,26 @@
 // src/js/config.js
-
 export const TOTAL_LEVELS = 20;
 
 export const BRICK_TYPES = [
-    { color: '#FF5733', points: 10 },
-    { color: '#33FF57', points: 20 },
-    { color: '#00FFFF', points: 30 },
-    { color: '#F3FF33', points: 40 },
-    { color: '#FF33F3', points: 50 }
+    { color: '#FF2A2A', points: 10 }, // Linha 1 - Vermelho
+    { color: '#FF7700', points: 10 }, // Linha 2 - Laranja
+    { color: '#FFFF00', points: 10 }, // Linha 3 - Amarelo
+    { color: '#A6FF00', points: 10 }, // Linha 4 - Verde Lima
+    { color: '#00FF66', points: 10 }, // Linha 5 - Verde
+    { color: '#00FA9A', points: 10 }, // Linha 6 - Menta
+    { color: '#00E5FF', points: 10 }, // Linha 7 - Ciano
+    { color: '#1E90FF', points: 10 }, // Linha 8 - Azul Elétrico
+    { color: '#9B59B6', points: 10 }  // Linha 9 - Roxo
+];
+
+export const LEVEL_TEXT_COLORS = ['#FF2A2A', '#00FF66', '#00E5FF', '#FFFF00', '#FF7700'];
+
+export const LEVEL_BACKGROUNDS = [
+    { bg: '#050b30', stroke: '#1a2b6c', hexFill: '#0a154a' } // Padrão base
 ];
 
 export const DIFFICULTY_CONFIGS = {
-    easy: {
-        spawnRate: 0.20, // 20%
-        weights: [
-            { type: 'C', weight: 15 },
-            { type: 'E', weight: 15 },
-            { type: 'S', weight: 10 },
-            { type: 'H', weight: 12 },
-            { type: 'G', weight: 10 },
-            { type: 'D', weight: 15 },
-            { type: 'P', weight: 10 },
-            { type: 'B', weight: 13 }
-        ]
-    },
-    medium: {
-        spawnRate: 0.08, // 8%
-        weights: [
-            { type: 'C', weight: 40 },
-            { type: 'E', weight: 30 },
-            { type: 'D', weight: 18 },
-            { type: 'B', weight: 3 },
-            { type: 'H', weight: 5 },
-            { type: 'S', weight: 2 },
-            { type: 'G', weight: 1 },
-            { type: 'P', weight: 1 }
-        ]
-    },
-    hard: {
-        spawnRate: 0.03, // 3%
-        weights: [
-            { type: 'C', weight: 50 },
-            { type: 'E', weight: 10 },
-            { type: 'D', weight: 35 },
-            { type: 'B', weight: 1 },
-            { type: 'H', weight: 1 },
-            { type: 'S', weight: 1 },
-            { type: 'G', weight: 1 },
-            { type: 'P', weight: 1 }
-        ]
-    }
+    easy: { spawnRate: 0.1, weights: [{type: 'C', weight: 3}, {type: 'E', weight: 2}, {type: 'P', weight: 3}] },
+    medium: { spawnRate: 0.2, weights: [{type: 'C', weight: 2}, {type: 'E', weight: 2}, {type: 'G', weight: 1}, {type: 'P', weight: 2}, {type: 'D', weight: 2}] },
+    hard: { spawnRate: 0.3, weights: [{type: 'S', weight: 2}, {type: 'H', weight: 2}, {type: 'G', weight: 2}, {type: 'D', weight: 2}, {type: 'B', weight: 1}] }
 };
-
-export const LEVEL_TEXT_COLORS = [
-    '#FFD700', '#00FFFF', '#FF69B4', '#00FF00', '#FF4500',
-    '#ADFF2F', '#1E90FF', '#FF1493', '#00FA9A', '#FFFF00',
-    '#FFD700', '#00FFFF', '#FF69B4', '#00FF00', '#FF4500',
-    '#ADFF2F', '#1E90FF', '#FF1493', '#00FA9A', '#FFFF00'
-];
-
-export const LEVEL_BACKGROUNDS = [
-    { bg: '#050b30', stroke: '#1a2b6c', hexFill: '#0a154a' },
-    { bg: '#2b0530', stroke: '#6c1a60', hexFill: '#4a0a40' },
-    { bg: '#05302b', stroke: '#1a6c56', hexFill: '#0a4a39' },
-    { bg: '#302b05', stroke: '#6c5c1a', hexFill: '#4a410a' },
-    { bg: '#200530', stroke: '#501a6c', hexFill: '#350a4a' }
-];
