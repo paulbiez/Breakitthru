@@ -15,7 +15,6 @@ export class Game {
         this.INITIAL_LIVES = 5;
         this.TOTAL_LEVELS = TOTAL_LEVELS;
 
-        // Inicialização explícita e imutável para evitar NaN
         this.currentLevel = 1; 
         this.score = 0;
         this.lives = this.INITIAL_LIVES;
@@ -452,7 +451,7 @@ export class Game {
                         this.lives--;
                         this.updateHUD(); 
                         this.deathPauseActive = true;
-                        this.deathPauseTimer = 180; 
+                        this.deathPauseTimer = 180; // 3 Segundos congelado
                     }
                     continue;
                 }
