@@ -4,26 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Breakout Game</title>
-<!-- Ajuste o caminho abaixo conforme a pasta do seu projeto -->
-<link rel="stylesheet" href="style.css"> 
+
+<!-- Chamada profissional e protegida contra cache do Firefox -->
+<link rel="stylesheet" href="./style.css?v=3">
 </head>
 <body>
 
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Overlay HUD em jogo -->
-    <div id="hudOverlay">
-        <div class="hud-text">
-            <span id="scoreText">Pts: 0</span> | 
-            <span id="levelText">Fase: 1/20</span> | 
-            <span id="livesText" style="color: #FF2A2A;">Vidas: 5</span>
-        </div>
-        <div class="sound-hud-btns">
-            <button id="btnPause" class="hud-sound-btn" title="Pausar Jogo">⏸️</button>
-            <button id="btnHudBgm" class="hud-sound-btn" title="Música de Fundo">🎵 <span id="hudBgmLabel">ON</span></button>
-            <button id="btnHudSfx" class="hud-sound-btn" title="Efeitos Sonoros">🔊 <span id="hudSfxLabel">ON</span></button>
-        </div>
+    <!-- HUD In-Game (Botões Canto Superior Direito) -->
+    <div id="hudControls">
+        <button id="btnPause" class="hud-btn" title="Pausar">⏸️</button>
+        <button id="btnHudBgm" class="hud-btn" title="Música">🎵</button>
+        <button id="btnHudSfx" class="hud-btn" title="Efeitos">🔊</button>
     </div>
 
     <!-- Menu Principal -->
@@ -41,8 +35,7 @@
         <button id="btnSettingsPaddle" class="menu-btn">Tamanho da Raquete</button>
         <button id="btnSettingsBallSpeed" class="menu-btn">Velocidade da Bola</button>
         <button id="btnSettingsBallSize" class="menu-btn">Tamanho da Bola</button>
-        <button id="btnSettingsSave" class="menu-btn btn-start">Salvar e Voltar</button>
-        <button id="btnSettingsCancel" class="menu-btn btn-danger">Cancelar</button>
+        <button id="btnSettingsSave" class="menu-btn btn-start">Voltar</button>
     </div>
 
     <!-- Submenu de Som -->
