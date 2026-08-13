@@ -1,134 +1,161 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Breakout Mobile - Modular</title>
-    <link rel="stylesheet" href="src/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breakout Game</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    body { background: #0b0b12; color: #fff; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+    
+    #gameContainer { position: relative; width: 400px; height: 600px; background: #000; border: 4px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.9); border-radius: 8px; overflow: hidden; }
+    canvas { display: block; width: 400px; height: 600px; }
+
+    /* Overlay do HUD e Botoes In-Game */
+    #hudOverlay { position: absolute; top: 0; left: 0; width: 400px; height: 40px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; z-index: 10; pointer-events: none; }
+    .hud-text { font-size: 13px; font-weight: bold; display: flex; gap: 8px; }
+    .sound-hud-btns { display: flex; gap: 6px; pointer-events: auto; }
+    .hud-sound-btn { background: rgba(0,0,0,0.6); border: 1px solid #555; color: #fff; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .hud-sound-btn:active { background: #444; }
+
+    /* Menus Overlay */
+    .menu-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 11, 48, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; z-index: 20; }
+    h1 { font-size: 2.2rem; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); margin-bottom: 5px; }
+    h2 { font-size: 1.4rem; color: #FFD700; margin-bottom: 8px; }
+    
+    .menu-btn { width: 220px; padding: 12px; font-size: 1rem; font-weight: bold; color: #fff; background: #1e90ff; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.1s, background 0.2s; }
+    .menu-btn:active { transform: scale(0.96); }
+    .btn-start { background: #00e600; }
+    .btn-settings { background: #ff9900; }
+    .btn-danger { background: #ff2a2a; }
+
+    /* Destaque para opção ativa nos submenus */
+    .active-option { background: #00e600 !important; border: 2px solid #ffffff !important; box-shadow: 0 0 12px rgba(0, 230, 0, 0.8); }
+
+    /* Controles de Som e Sliders - Liberado user-select para Firefox */
+    .sound-control-group { width: 240px; display: flex; flex-direction: column; gap: 6px; text-align: left; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid #333; }
+    .sound-control-group label { font-size: 0.9rem; font-weight: bold; color: #FFD700; display: flex; justify-content: space-between; }
+    
+    .sound-slider { width: 100%; height: 12px; border-radius: 6px; background: #444; outline: none; cursor: pointer; accent-color: #00e600; user-select: auto !important; -webkit-user-select: auto !important; touch-action: manipulation; }
+
+    /* Picker de Fases */
+    #iosPickerOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 30; }
+    .picker-card { background: #222; border-radius: 12px; padding: 20px; width: 260px; text-align: center; border: 1px solid #444; }
+    .picker-select { width: 100%; padding: 10px; font-size: 1.1rem; border-radius: 8px; background: #333; color: #fff; border: 1px solid #555; margin: 15px 0; outline: none; }
+</style>
 </head>
 <body>
 
-<!-- Aviso Global de Orientação -->
-<div id="landscapeWarning">
-    <div class="warning-content">
-        <span class="rotate-icon">📱🔄</span>
-        <h2>Modo Vertical Necessário</h2>
-        <p>Este jogo foi desenvolvido para ser jogado com o celular em pé. Por favor, volte o aparelho para a posição original para continuar!</p>
-    </div>
-</div>
-
 <div id="gameContainer">
-    <!-- HUD do Topo -->
-    <div id="hud">
-        <span id="scoreText">Pts: 0</span>
-        <span id="levelText">Fase: 1/20</span>
-        <span id="highScoreText" class="high-score">Rec: 0</span>
-        <span id="livesText">Vidas: 5</span>
-        <button id="quitBtn" title="Opções / Pausa">✕</button>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Overlay HUD em jogo -->
+    <div id="hudOverlay">
+        <div class="hud-text">
+            <span id="scoreText">Pts: 0</span> | 
+            <span id="levelText">Fase: 1/20</span> | 
+            <span id="livesText" style="color: #FF2A2A;">Vidas: 5</span>
+        </div>
+        <div class="sound-hud-btns">
+            <button id="btnPause" class="hud-sound-btn" title="Pausar Jogo">⏸️</button>
+            <button id="btnHudBgm" class="hud-sound-btn" title="Música de Fundo">🎵 <span id="hudBgmLabel">ON</span></button>
+            <button id="btnHudSfx" class="hud-sound-btn" title="Efeitos Sonoros">🔊 <span id="hudSfxLabel">ON</span></button>
+        </div>
     </div>
 
     <!-- Menu Principal -->
-    <div id="menu">
-        <h1 style="margin-bottom: 5px;">BREAKOUT</h1>
-        <p id="menuHighScore" class="high-score" style="margin-bottom: 15px; font-weight: bold;">RECORDE: 0</p>
-        <button id="btnStart" class="btn-continue">Começar Jogo</button>
-        <button id="selectLevelBtn" class="btn-select">Selecionar Fase: 1</button>
-        <button id="btnSettings" class="btn-restart">Configurações</button>
+    <div id="menu" class="menu-overlay">
+        <h1>BREAKOUT</h1>
+        <button id="btnStart" class="menu-btn btn-start">Começar Jogo</button>
+        <button id="selectLevelBtn" class="menu-btn">Selecionar Fase: 1</button>
+        <button id="btnSettings" class="menu-btn btn-settings">Configurações</button>
     </div>
 
-    <!-- Menu de Configurações Principal (Sem Dificuldade visível) -->
-    <div id="settingsMenu" style="display: none;">
-        <h2 style="margin-bottom: 20px;">CONFIGURAÇÕES</h2>
-        <button id="btnSettingsPaddle" class="btn-select">Tamanho do Jogador</button>
-        <button id="btnSettingsBallSpeed" class="btn-select">Velocidade da Bola</button>
-        <button id="btnSettingsBallSize" class="btn-select">Tamanho da Bola</button>
-        <button id="btnSettingsSave" class="btn-continue" style="margin-top: 20px;">Salvar alterações</button>
-        <button id="btnSettingsCancel" class="btn-quit">Cancelar</button>
+    <!-- Menu de Configurações Geral -->
+    <div id="settingsMenu" class="menu-overlay" style="display: none;">
+        <h2>Configurações</h2>
+        <button id="btnSettingsSound" class="menu-btn btn-settings">Som</button>
+        <button id="btnSettingsPaddle" class="menu-btn">Tamanho da Raquete</button>
+        <button id="btnSettingsBallSpeed" class="menu-btn">Velocidade da Bola</button>
+        <button id="btnSettingsBallSize" class="menu-btn">Tamanho da Bola</button>
+        <button id="btnSettingsSave" class="menu-btn btn-start">Salvar e Voltar</button>
+        <button id="btnSettingsCancel" class="menu-btn btn-danger">Cancelar</button>
     </div>
 
-    <!-- Submenu: Tamanho do Jogador -->
-    <div id="settingsPaddleMenu" style="display: none;">
-        <h2 style="margin-bottom: 15px;">TAMANHO DO JOGADOR</h2>
-        <button class="btn-paddle-size" data-size="small">Pequeno</button>
-        <button class="btn-paddle-size" data-size="medium">Médio</button>
-        <button class="btn-paddle-size" data-size="large">Grande</button>
-        <button id="btnPaddleBack" class="btn-quit" style="margin-top: 20px;">Voltar</button>
+    <!-- Submenu de Som -->
+    <div id="settingsSoundMenu" class="menu-overlay" style="display: none;">
+        <h2>Configurações de Som</h2>
         
-        <div class="paddle-preview-container">
-            <span style="font-size: 11px; color: #aaa; margin-bottom: 5px; display: block;">Pré-visualização da Raquete:</span>
-            <div id="previewPaddle"></div>
+        <div class="sound-control-group">
+            <label>Música de Fundo <span id="bgmValText">50%</span></label>
+            <input type="range" id="bgmVolumeSlider" class="sound-slider" min="0" max="100" value="50">
+        </div>
+
+        <div class="sound-control-group">
+            <label>Sons do Jogo (SFX) <span id="sfxValText">100%</span></label>
+            <input type="range" id="sfxVolumeSlider" class="sound-slider" min="0" max="100" value="100">
+        </div>
+
+        <button id="btnSoundBack" class="menu-btn">Voltar</button>
+    </div>
+
+    <!-- Submenus de Configuração -->
+    <div id="settingsPaddleMenu" class="menu-overlay" style="display: none;">
+        <h2>Tamanho da Raquete</h2>
+        <button class="menu-btn btn-paddle-size" data-size="small">Pequena</button>
+        <button class="menu-btn btn-paddle-size" data-size="medium">Média</button>
+        <button class="menu-btn btn-paddle-size" data-size="large">Grande</button>
+        <div id="previewPaddle" style="height: 12px; background: #fff; border-radius: 6px; margin: 10px 0;"></div>
+        <button id="btnPaddleBack" class="menu-btn">Voltar</button>
+    </div>
+
+    <div id="settingsBallSpeedMenu" class="menu-overlay" style="display: none;">
+        <h2>Velocidade da Bola</h2>
+        <button class="menu-btn btn-ball-speed" data-speed="slow">Lenta</button>
+        <button class="menu-btn btn-ball-speed" data-speed="fast">Rápida</button>
+        <button id="btnSpeedBack" class="menu-btn">Voltar</button>
+    </div>
+
+    <div id="settingsBallSizeMenu" class="menu-overlay" style="display: none;">
+        <h2>Tamanho da Bola</h2>
+        <button class="menu-btn btn-ball-size" data-size="small">Pequena</button>
+        <button class="menu-btn btn-ball-size" data-size="normal">Normal</button>
+        <button class="menu-btn btn-ball-size" data-size="large">Grande</button>
+        <div id="previewBall" style="background: #fff; border-radius: 50%; margin: 10px 0;"></div>
+        <button id="btnSizeBack" class="menu-btn">Voltar</button>
+    </div>
+
+    <!-- Menus In-Game -->
+    <div id="pauseMenu" class="menu-overlay" style="display: none;">
+        <h2>Jogo Pausado</h2>
+        <button class="menu-btn btn-continue">Continuar</button>
+        <button class="menu-btn btn-restart">Reiniciar Fase 1</button>
+        <button class="menu-btn btn-quit btn-danger">Sair para o Menu</button>
+    </div>
+
+    <div id="gameOverMenu" class="menu-overlay" style="display: none;">
+        <h2 id="gameOverTitle">FIM DO JOGO</h2>
+        <p id="finalScore" style="color: #fff; font-size: 1.2rem; margin-bottom: 10px;"></p>
+        <button class="menu-btn btn-continue">Continuar com 3 Vidas</button>
+        <button class="menu-btn btn-quit btn-danger">Menu Principal</button>
+    </div>
+
+    <div id="winOverlay" class="menu-overlay" style="display: none;">
+        <h2>PARABÉNS! VOCÊ VENCEU!</h2>
+        <p id="winScore" style="color: #FFD700; font-size: 1.3rem; margin-bottom: 10px;"></p>
+        <button class="menu-btn btn-quit">Menu Principal</button>
+    </div>
+
+    <!-- Modal Picker de Fase -->
+    <div id="iosPickerOverlay">
+        <div class="picker-card">
+            <h2>Selecionar Fase</h2>
+            <select id="pickerSelect" class="picker-select"></select>
+            <button id="pickerConfirmBtn" class="menu-btn btn-start">Confirmar</button>
         </div>
     </div>
-
-    <!-- Submenu: Velocidade da Bola -->
-    <div id="settingsBallSpeedMenu" style="display: none;">
-        <h2 style="margin-bottom: 20px;">VELOCIDADE DA BOLA</h2>
-        <button class="btn-ball-speed" data-speed="slow">Lenta</button>
-        <button class="btn-ball-speed" data-speed="normal">Normal</button>
-        <button class="btn-ball-speed" data-speed="fast">Rápida</button>
-        <button id="btnSpeedBack" class="btn-quit" style="margin-top: 30px;">Voltar</button>
-    </div>
-
-    <!-- Submenu: Tamanho da Bola -->
-    <div id="settingsBallSizeMenu" style="display: none;">
-        <h2 style="margin-bottom: 15px;">TAMANHO DA BOLA</h2>
-        <button class="btn-ball-size" data-size="small">Pequena</button>
-        <button class="btn-ball-size" data-size="normal">Normal</button>
-        <button class="btn-ball-size" data-size="large">Grande</button>
-        <button id="btnSizeBack" class="btn-quit" style="margin-top: 20px;">Voltar</button>
-
-        <div class="ball-preview-container">
-            <span style="font-size: 11px; color: #aaa; margin-bottom: 5px; display: block;">Pré-visualização da Bola:</span>
-            <div id="previewBall"></div>
-        </div>
-    </div>
-
-    <!-- Menu de Pausa / Desistência -->
-    <div id="pauseMenu" style="display: none;">
-        <h2 style="margin-bottom: 20px; font-size: 1.8rem;">JOGO PAUSADO</h2>
-        <button class="btn-continue">Continuar</button>
-        <button class="btn-restart">Reiniciar Jogo (Fase 1)</button>
-        <button class="btn-quit">Menu Principal</button>
-    </div>
-
-    <!-- Modal iOS Picker (Padrão Ouro) -->
-    <div id="iosPickerOverlay" style="display: none;">
-        <div class="ios-picker-sheet">
-            <div class="ios-picker-header">
-                <button class="ios-btn-cancel">Cancelar</button>
-                <span>Selecionar Fase</span>
-                <button class="ios-btn-select">Selecionar</button>
-            </div>
-            <div class="ios-wheel-container" id="wheelContainer">
-                <div class="ios-wheel-shade-top"></div>
-                <div class="ios-wheel-highlight"></div>
-                <div class="ios-wheel-shade-bottom"></div>
-                <ul class="ios-wheel-list" id="wheelList"></ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Menu de Game Over -->
-    <div id="gameOverMenu" style="display: none;">
-        <h1 id="gameOverTitle">FIM DE JOGO</h1>
-        <p id="finalScore">Pontos Totais: 0</p>
-        <p id="newRecordNotice" class="high-score" style="display: none; font-weight: bold;">NOVO RECORDE!</p>
-        <button class="btn-continue">Continuar (Fase Atual)</button>
-        <button class="btn-quit">Menu Principal</button>
-    </div>
-
-    <!-- Tela de Vitória -->
-    <div id="winOverlay">
-        <div class="zoom-text">SENSACIONAL!<br>VOCÊ VENCEU TODOS OS DESAFIOS!</div>
-        <p id="winScore" style="color: white; margin-top: 30px; font-size: 1.2rem;">Pontos: 0</p>
-        <button class="btn-quit" style="margin-top: 20px;">Menu Principal</button>
-    </div>
-
-    <!-- Canvas do Jogo -->
-    <canvas id="gameCanvas"></canvas>
 </div>
 
 <script type="module" src="src/js/main.js"></script>
-
 </body>
 </html>
