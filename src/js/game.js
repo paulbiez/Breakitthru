@@ -20,8 +20,9 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        this.baseWidth = 90;
-        this.paddle = { x: 155, y: 520, width: 90, height: 12, glue: false };
+        // Base da raquete reduzida em 30% (de 90 para 63)
+        this.baseWidth = 63;
+        this.paddle = { x: 157.5, y: 520, width: 85.05, height: 12, glue: false };
         this.balls = [];
         this.bricks = [];
         this.bonuses = [];
@@ -80,7 +81,9 @@ export class Game {
         if (this.paddleSizeOption === 'small') scale = 0.7;
         if (this.paddleSizeOption === 'medium') scale = 1.0;
         if (this.paddleSizeOption === 'large') scale = 1.35;
-        this.baseWidth = 90;
+        
+        // Base reduzida em 30%
+        this.baseWidth = 63;
         this.paddle.width = this.baseWidth * scale;
         if (this.paddle.x < 0) this.paddle.x = 0;
         if (this.paddle.x + this.paddle.width > this.canvas.width) this.paddle.x = this.canvas.width - this.paddle.width;
@@ -558,11 +561,9 @@ export class Game {
 
         if (this.hexPattern) { this.ctx.fillStyle = this.hexPattern; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); }
         
-        // Linha divisória do topo
         this.ctx.fillStyle = '#444'; 
         this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
 
-        // HUD Renderizado no Próprio Canvas (Nítido e Sem Cortar)
         this.ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, Arial';
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fillText(`Pts: ${this.score}`, 12, 26);
