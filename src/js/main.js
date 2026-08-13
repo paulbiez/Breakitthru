@@ -9,9 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let wasRunningBeforeRotation = false;
     let settingsBackup = null;
 
+    // Atualiza o texto do botão de seleção com o nível inicial (Fase 1)
+    const selectBtn = document.getElementById('selectLevelBtn');
+    if (selectBtn) {
+        selectBtn.innerText = `Selecionar Fase: ${game.currentLevel}`;
+    }
+
     const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
         game.currentLevel = level;
-        let selectBtn = document.getElementById('selectLevelBtn');
         if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${level}`;
     });
 
@@ -37,16 +42,15 @@ document.addEventListener('DOMContentLoaded', () => {
         game.startGame();
     });
 
-    document.getElementById('selectLevelBtn').addEventListener('click', () => {
-        picker.open(game.currentLevel);
-    });
+    if (selectBtn) {
+        selectBtn.addEventListener('click', () => {
+            picker.open(game.currentLevel);
+        });
+    }
 
     function hideAllMenus() {
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('settingsMenu').style.display = 'none';
-        document.getElementById('settingsPaddleMenu').style.display = 'none';
-        document.getElementById('settingsBallSpeedMenu').style.display = 'none';
-        document.getElementById('settingsBallSizeMenu').style.display = 'none';
+        document.querySelectorAll('#menu, #settingsMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
+                .forEach(el => el.style.display = 'none');
     }
 
     function updatePreviewPaddle(sizeOption) {
@@ -107,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Usando a variável 'btn' ao invés de 'e.target' garante funcionamento perfeito no Firefox
     document.getElementById('btnSettingsPaddle').addEventListener('click', () => {
         hideAllMenus();
         document.getElementById('settingsPaddleMenu').style.display = 'flex';
@@ -169,18 +172,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('quitBtn').addEventListener('click', () => {
-        game.gameRunning = false;
-        document.getElementById('pauseMenu').style.display = 'flex';
-    });
+    const quitBtn = document.getElementById('quitBtn');
+    if (quitBtn) {
+        quitBtn.addEventListener('click', () => {
+            game.gameRunning = false;
+            document.getElementById('pauseMenu').style.display = 'flex';
+        });
+    }
 
-    document.querySelector('#pauseMenu .btn-continue').addEventListener('click', () => game.resumeGame());
-    document.querySelector('#pauseMenu .btn-restart').addEventListener('click', () => game.restartFromLevel1());
-    document.querySelector('#pauseMenu .btn-quit').addEventListener('click', () => game.quitToMainMenu());
+    document.querySelector('#pauseMenu .btn-continue')?.addEventListener('click', () => game.resumeGame());
+    document.querySelector('#pauseMenu .btn-restart')?.addEventListener('click', () => game.restartFromLevel1());
+    document.querySelector('#pauseMenu .btn-quit')?.addEventListener('click', () => game.quitToMainMenu());
 
-    document.querySelector('#gameOverMenu .btn-continue').addEventListener('click', () => game.continueGame());
-    document.querySelector('#gameOverMenu .btn-quit').addEventListener('click', () => game.quitToMainMenu());
-    document.querySelector('#winOverlay .btn-quit').addEventListener('click', () => game.quitToMainMenu());
+    document.querySelector('#gameOverMenu .btn-continue')?.addEventListener('click', () => game.continueGame());
+    document.querySelector('#gameOverMenu .btn-quit')?.addEventListener('click', () => game.quitToMainMenu());
+    document.querySelector('#winOverlay .btn-quit')?.addEventListener('click', () => game.quitToMainMenu());
 
     function gameLoop() {
         game.update();
