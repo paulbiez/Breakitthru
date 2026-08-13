@@ -1,6 +1,6 @@
 // src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
-import { playSound, initAudio, playMp3, playBgm, pauseBgm, stopBgm, getAudioState } from './audio.js';
+import { playSound, initAudio, playMp3, playBgm, pauseBgm, stopBgm } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 import { getLevelPattern } from './levels.js';
 
@@ -82,7 +82,7 @@ export class Game {
         if (this.paddleSizeOption === 'medium') scale = 1.0;
         if (this.paddleSizeOption === 'large') scale = 1.35;
         
-        // Base reduzida em 30%
+        // Aplicação da nova base (63px)
         this.baseWidth = 63;
         this.paddle.width = this.baseWidth * scale;
         if (this.paddle.x < 0) this.paddle.x = 0;
