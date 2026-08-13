@@ -1,6 +1,6 @@
 // src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
-import { playSound, initAudio, playMp3, playBgm, pauseBgm, stopBgm } from './audio.js';
+import { playSound, initAudio, playMp3, playBgm, pauseBgm, stopBgm, getAudioState } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 import { getLevelPattern } from './levels.js';
 
@@ -107,7 +107,6 @@ export class Game {
                 .forEach(el => el.style.display = 'none');
         this.initLevel(this.currentLevel);
         this.resetBall('intro');
-        this.updateHUD();
     }
 
     resumeGame() { 
@@ -135,7 +134,6 @@ export class Game {
         this.gameRunning = true; 
         playBgm();
         this.resetBall('respawn'); 
-        this.updateHUD(); 
     }
 
     getDeterministicCapsule() {
@@ -456,7 +454,6 @@ export class Game {
                         this.bonuses = []; 
                         playMp3('src/assets/scream1.mp3'); 
                         this.lives--;
-                        this.updateHUD(); 
                         this.deathPauseActive = true;
                         this.deathPauseTimer = 180; 
                     }
@@ -488,7 +485,7 @@ export class Game {
                                 if (!b.indestructible) {
                                     b.hits--;
                                     if (b.hits <= 0) {
-                                        b.status = 0; this.score += b.points; this.updateHUD();
+                                        b.status = 0; this.score += b.points;
                                         if (b.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
                                             let capType = this.getDeterministicCapsule();
                                             this.bonuses.push({ x: b.x + b.w / 2 - 12, y: b.y, type: capType, speed: 2 });
@@ -532,7 +529,7 @@ export class Game {
                     });
                     this.gigaBallTimer = 15 * 60;
                 } else if (b.type === 'D') { this.spawnMultiBalls(); } 
-                else if (b.type === 'P') { this.lives++; this.updateHUD(); } 
+                else if (b.type === 'P') { this.lives++; } 
                 else if (b.type === 'B') { this.warpDoorActive = true; }
 
                 this.bonuses.splice(i, 1);
@@ -551,23 +548,27 @@ export class Game {
             this.currentLevel++;
             this.initLevel(this.currentLevel);
             this.resetBall('intro');
-            this.updateHUD();
         } else {
             this.triggerVictoryExplosion();
         }
-    }
-
-    updateHUD() {
-        let s = document.getElementById('scoreText'); if (s) s.innerText = `Pts: ${this.score}`;
-        let l = document.getElementById('levelText'); if (l) l.innerText = `Fase: ${this.currentLevel}/${this.TOTAL_LEVELS}`;
-        let v = document.getElementById('livesText'); if (v) v.innerText = `Vidas: ${this.lives}`;
     }
 
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         if (this.hexPattern) { this.ctx.fillStyle = this.hexPattern; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); }
-        this.ctx.fillStyle = '#444'; this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
+        
+        // Linha divisória do topo
+        this.ctx.fillStyle = '#444'; 
+        this.ctx.fillRect(0, this.topWallY, this.canvas.width, 4);
+
+        // HUD Renderizado no Próprio Canvas (Nítido e Sem Cortar)
+        this.ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, Arial';
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillText(`Pts: ${this.score}`, 12, 26);
+        this.ctx.fillText(`Fase: ${this.currentLevel}/${this.TOTAL_LEVELS}`, 115, 26);
+        this.ctx.fillStyle = '#FF2A2A';
+        this.ctx.fillText(`Vidas: ${this.lives}`, 210, 26);
 
         if (this.electricShieldActive) {
             this.ctx.shadowBlur = 10; this.ctx.shadowColor = '#00FFFF'; this.ctx.strokeStyle = '#00FFFF'; this.ctx.lineWidth = 3;

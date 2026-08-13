@@ -2,6 +2,7 @@
 import { Game } from './game.js';
 import { IosPicker } from './IosPicker.js';
 import { initInputs } from './input.js';
+import { setBgmVolume, setSfxVolume, toggleBgmMute, toggleSfxMute, getAudioState, pauseBgm } from './audio.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
@@ -11,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let wasRunningBeforeRotation = false;
     let settingsBackup = null;
 
-    // Garantia estrita de número válido para a fase inicial
     let validLevel = parseInt(game.currentLevel, 10);
     if (isNaN(validLevel) || validLevel < 1) {
         validLevel = 1;
@@ -61,8 +61,89 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function hideAllMenus() {
-        document.querySelectorAll('#menu, #settingsMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
+        document.querySelectorAll('#menu, #settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
                 .forEach(el => el.style.display = 'none');
+    }
+
+    function updateSoundUI() {
+        const state = getAudioState();
+        
+        const bgmSlider = document.getElementById('bgmVolumeSlider');
+        const bgmText = document.getElementById('bgmValText');
+        const btnHudBgm = document.getElementById('btnHudBgm');
+        if (bgmSlider) bgmSlider.value = Math.round(state.bgmVolume * 100);
+        if (bgmText) bgmText.innerText = state.isBgmMuted ? "MUTO" : `${Math.round(state.bgmVolume * 100)}%`;
+        if (btnHudBgm) btnHudBgm.style.opacity = state.isBgmMuted ? "0.4" : "1.0";
+
+        const sfxSlider = document.getElementById('sfxVolumeSlider');
+        const sfxText = document.getElementById('sfxValText');
+        const btnHudSfx = document.getElementById('btnHudSfx');
+        if (sfxSlider) sfxSlider.value = Math.round(state.sfxVolume * 100);
+        if (sfxText) sfxText.innerText = state.isSfxMuted ? "MUTO" : `${Math.round(state.sfxVolume * 100)}%`;
+        if (btnHudSfx) btnHudSfx.style.opacity = state.isSfxMuted ? "0.4" : "1.0";
+    }
+
+    // --- CONTROLES DE ÁUDIO NO MENU DE SOM ---
+    const bgmSlider = document.getElementById('bgmVolumeSlider');
+    if (bgmSlider) {
+        bgmSlider.addEventListener('input', (e) => {
+            setBgmVolume(e.target.value / 100);
+            updateSoundUI();
+        });
+    }
+
+    const sfxSlider = document.getElementById('sfxVolumeSlider');
+    if (sfxSlider) {
+        sfxSlider.addEventListener('input', (e) => {
+            setSfxVolume(e.target.value / 100);
+            updateSoundUI();
+        });
+    }
+
+    // --- BOTÕES DE MUTE / PAUSA IN-GAME (HUD) ---
+    const btnPause = document.getElementById('btnPause');
+    if (btnPause) {
+        btnPause.addEventListener('click', () => {
+            if (game.gameRunning) {
+                game.gameRunning = false;
+                pauseBgm();
+                document.getElementById('pauseMenu').style.display = 'flex';
+            }
+        });
+    }
+
+    const btnHudBgm = document.getElementById('btnHudBgm');
+    if (btnHudBgm) {
+        btnHudBgm.addEventListener('click', () => {
+            toggleBgmMute();
+            updateSoundUI();
+        });
+    }
+
+    const btnHudSfx = document.getElementById('btnHudSfx');
+    if (btnHudSfx) {
+        btnHudSfx.addEventListener('click', () => {
+            toggleSfxMute();
+            updateSoundUI();
+        });
+    }
+
+    // --- NAVEGAÇÃO DOS MENUS ---
+    const btnSettingsSound = document.getElementById('btnSettingsSound');
+    if (btnSettingsSound) {
+        btnSettingsSound.addEventListener('click', () => {
+            hideAllMenus();
+            updateSoundUI();
+            document.getElementById('settingsSoundMenu').style.display = 'flex';
+        });
+    }
+
+    const btnSoundBack = document.getElementById('btnSoundBack');
+    if (btnSoundBack) {
+        btnSoundBack.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('settingsMenu').style.display = 'flex';
+        });
     }
 
     function updatePreviewPaddle(sizeOption) {
@@ -110,17 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
             settingsBackup = null;
-            hideAllMenus();
-            document.getElementById('menu').style.display = 'flex';
-        });
-    }
-
-    const cancelBtn = document.getElementById('btnSettingsCancel');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-            if (settingsBackup) {
-                game.restoreSettings(settingsBackup);
-            }
             hideAllMenus();
             document.getElementById('menu').style.display = 'flex';
         });
@@ -209,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (quitBtn) {
         quitBtn.addEventListener('click', () => {
             game.gameRunning = false;
+            pauseBgm();
             document.getElementById('pauseMenu').style.display = 'flex';
         });
     }

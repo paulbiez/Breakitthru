@@ -1,6 +1,8 @@
 // src/js/audio.js
 let audioCtx = null;
-let bgmAudio = null;
+let bgmBuffer = null;
+let bgmSourceNode = null;
+let bgmGainNode = null;
 
 let sfxVolume = 1.0;
 let bgmVolume = 0.5;
@@ -10,6 +12,7 @@ let prevBgmVolume = 0.5;
 
 let isSfxMuted = false;
 let isBgmMuted = false;
+let isBgmPlaying = false;
 
 export function initAudio() {
     try {
@@ -19,35 +22,67 @@ export function initAudio() {
         if (audioCtx.state === 'suspended') {
             audioCtx.resume().catch(e => console.warn("AudioContext resume falhou", e));
         }
-        if (!bgmAudio) {
-            bgmAudio = new Audio('src/assets/bckMusic.mp3');
-            bgmAudio.loop = true;
-            bgmAudio.volume = isBgmMuted ? 0 : bgmVolume;
+        if (!bgmGainNode) {
+            bgmGainNode = audioCtx.createGain();
+            bgmGainNode.connect(audioCtx.destination);
+            bgmGainNode.gain.value = isBgmMuted ? 0 : bgmVolume;
         }
     } catch(e) { 
         console.warn("AudioContext não suportado:", e); 
     }
 }
 
-export function playBgm() {
+async function loadBgmBuffer() {
+    if (bgmBuffer) return bgmBuffer;
+    try {
+        const response = await fetch('src/assets/bckMusic.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        bgmBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        return bgmBuffer;
+    } catch (e) {
+        console.warn("Erro ao carregar/decodificar bckMusic.mp3:", e);
+        return null;
+    }
+}
+
+export async function playBgm() {
     initAudio();
-    if (bgmAudio) {
-        bgmAudio.volume = isBgmMuted ? 0 : bgmVolume;
-        bgmAudio.play().catch(e => console.warn("Reprodução de BGM aguardando interação do usuário:", e));
+    if (isBgmPlaying) return;
+
+    const buffer = await loadBgmBuffer();
+    if (!buffer) return;
+
+    try {
+        if (bgmSourceNode) {
+            bgmSourceNode.stop();
+            bgmSourceNode.disconnect();
+        }
+        bgmSourceNode = audioCtx.createBufferSource();
+        bgmSourceNode.buffer = buffer;
+        bgmSourceNode.loop = true; // Loop perfeito e gapless via Web Audio API
+        bgmSourceNode.connect(bgmGainNode);
+        
+        bgmGainNode.gain.value = isBgmMuted ? 0 : bgmVolume;
+        bgmSourceNode.start(0);
+        isBgmPlaying = true;
+    } catch (e) {
+        console.warn("Erro ao reproduzir BGM:", e);
     }
 }
 
 export function pauseBgm() {
-    if (bgmAudio) {
-        bgmAudio.pause();
+    if (bgmSourceNode && isBgmPlaying) {
+        try {
+            bgmSourceNode.stop();
+            bgmSourceNode.disconnect();
+        } catch(e) {}
+        bgmSourceNode = null;
+        isBgmPlaying = false;
     }
 }
 
 export function stopBgm() {
-    if (bgmAudio) {
-        bgmAudio.pause();
-        bgmAudio.currentTime = 0;
-    }
+    pauseBgm();
 }
 
 export function setBgmVolume(val) {
@@ -60,8 +95,8 @@ export function setBgmVolume(val) {
     } else {
         isBgmMuted = true;
     }
-    if (bgmAudio) {
-        bgmAudio.volume = isBgmMuted ? 0 : bgmVolume;
+    if (bgmGainNode) {
+        bgmGainNode.gain.value = isBgmMuted ? 0 : bgmVolume;
     }
 }
 
@@ -87,8 +122,8 @@ export function toggleBgmMute() {
         isBgmMuted = true;
         bgmVolume = 0;
     }
-    if (bgmAudio) {
-        bgmAudio.volume = isBgmMuted ? 0 : bgmVolume;
+    if (bgmGainNode) {
+        bgmGainNode.gain.value = isBgmMuted ? 0 : bgmVolume;
     }
     return { isMuted: isBgmMuted, volume: bgmVolume };
 }
