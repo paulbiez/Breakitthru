@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectBtn.innerText = `Selecionar Fase: ${validLevel}`;
     }
 
-    // Instancia o IosPicker original
+    // Instancia o verdadeiro rolo 3D IosPicker
     const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
         let selected = parseInt(level, 10) || 1;
         game.currentLevel = selected;
@@ -84,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnHudSfx) btnHudSfx.style.opacity = state.isSfxMuted ? "0.4" : "1.0";
     }
 
-    // Controles de som
     const bgmSlider = document.getElementById('bgmVolumeSlider');
     if (bgmSlider) {
         bgmSlider.addEventListener('input', (e) => {
@@ -101,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Botões HUD
     const btnPause = document.getElementById('btnPause');
     if (btnPause) {
         btnPause.addEventListener('click', () => {
@@ -129,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Navegação de menus
     const btnSettingsSound = document.getElementById('btnSettingsSound');
     if (btnSettingsSound) {
         btnSettingsSound.addEventListener('click', () => {
