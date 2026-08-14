@@ -1,5 +1,6 @@
 // src/js/main.js
 import { Game } from './game.js';
+import { IosPicker } from './IosPicker.js';
 import { initInputs } from './input.js';
 import { setBgmVolume, setSfxVolume, toggleBgmMute, toggleSfxMute, getAudioState, pauseBgm } from './audio.js';
 
@@ -11,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let wasRunningBeforeRotation = false;
     let settingsBackup = null;
 
-    // Garantia de fase válida
     let validLevel = parseInt(game.currentLevel, 10);
     if (isNaN(validLevel) || validLevel < 1) {
         validLevel = 1;
@@ -23,51 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
         selectBtn.innerText = `Selecionar Fase: ${validLevel}`;
     }
 
-    // --- CONTROLE DIRETO DO MODAL DE SELEÇÃO DE FASES ---
-    const pickerOverlay = document.getElementById('iosPickerOverlay');
-    const pickerSelect = document.getElementById('pickerSelect');
-    const pickerConfirmBtn = document.getElementById('pickerConfirmBtn');
+    // Instancia o seletor independente
+    const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
+        let selected = parseInt(level, 10) || 1;
+        game.currentLevel = selected;
+        if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${selected}`;
+    });
 
-    function populateLevelOptions() {
-        if (!pickerSelect) return;
-        pickerSelect.innerHTML = '';
-        for (let i = 1; i <= game.TOTAL_LEVELS; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.innerText = `Fase ${i}`;
-            pickerSelect.appendChild(opt);
-        }
-    }
-    populateLevelOptions();
-
-    if (selectBtn && pickerOverlay && pickerSelect) {
-        selectBtn.addEventListener('click', () => {
-            pickerSelect.value = game.currentLevel || 1;
-            pickerOverlay.style.display = 'flex';
-        });
-    }
-
-    if (pickerConfirmBtn && pickerOverlay && pickerSelect) {
-        pickerConfirmBtn.addEventListener('click', () => {
-            const selectedLevel = parseInt(pickerSelect.value, 10) || 1;
-            game.currentLevel = selectedLevel;
-            if (selectBtn) {
-                selectBtn.innerText = `Selecionar Fase: ${selectedLevel}`;
-            }
-            pickerOverlay.style.display = 'none';
-        });
-    }
-
-    // Fechar modal ao clicar fora do card
-    if (pickerOverlay) {
-        pickerOverlay.addEventListener('click', (e) => {
-            if (e.target === pickerOverlay) {
-                pickerOverlay.style.display = 'none';
-            }
-        });
-    }
-
-    // --- INICIALIZAÇÃO DE ENTRADAS DO JOGO ---
     initInputs(canvas, game.paddle, 
         { onLaunch: () => game.launchBalls() }, 
         () => game.levelIntroActive || game.prepareActive || game.deathPauseActive
@@ -90,6 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnStart) {
         btnStart.addEventListener('click', () => {
             game.startGame();
+        });
+    }
+
+    if (selectBtn) {
+        selectBtn.addEventListener('click', () => {
+            picker.open(game.currentLevel || 1);
         });
     }
 
