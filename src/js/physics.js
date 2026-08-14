@@ -1,43 +1,83 @@
 // src/js/physics.js
 
-export function isColliding(circle, rect) {
-    let distX = Math.abs(circle.x - rect.x - rect.w / 2);
-    let distY = Math.abs(circle.y - rect.y - rect.h / 2);
+export function enforceBallSpeed(ball) {
+    let speed = Math.hypot(ball.dx, ball.dy);
+    if (speed === 0) return;
 
-    if (distX > (rect.w / 2 + circle.radius)) return false;
-    if (distY > (rect.h / 2 + circle.radius)) return false;
+    let targetSpeed = ball.baseSpeed || speed;
 
-    if (distX <= (rect.w / 2)) return true;
-    if (distY <= (rect.h / 2)) return true;
+    if (Math.abs(ball.dy) < 0.8) {
+        ball.dy = ball.dy >= 0 ? 0.8 : -0.8;
+    }
 
-    let dx = distX - rect.w / 2;
-    let dy = distY - rect.h / 2;
-    return (dx * dx + dy * dy <= (circle.radius * circle.radius));
+    let newSpeed = Math.hypot(ball.dx, ball.dy);
+    ball.dx = (ball.dx / newSpeed) * targetSpeed;
+    ball.dy = (ball.dy / newSpeed) * targetSpeed;
 }
 
-export function resolveBrickCollision(ball, brick, brickW, brickH) {
-    let prevX = ball.x - ball.dx;
-    let prevY = ball.y - ball.dy;
+export function isColliding(ball, rect) {
+    let testX = ball.x;
+    let testY = ball.y;
 
-    if (prevY + ball.radius <= brick.y || prevY - ball.radius >= brick.y + brickH) {
-        ball.dy = -ball.dy;
-    } else if (prevX + ball.radius <= brick.x || prevX - ball.radius >= brick.x + brickW) {
-        ball.dx = -ball.dx;
-    } else {
-        ball.dy = -ball.dy;
+    if (ball.x < rect.x) testX = rect.x;
+    else if (ball.x > rect.x + rect.w) testX = rect.x + rect.w;
+
+    if (ball.y < rect.y) testY = rect.y;
+    else if (ball.y > rect.y + rect.h) testY = rect.y + rect.h;
+
+    let distX = ball.x - testX;
+    let distY = ball.y - testY;
+    let distance = Math.hypot(distX, distY);
+
+    return distance <= ball.radius;
+}
+
+export function resolveBrickCollision(ball, brick) {
+    let testX = ball.x;
+    let testY = ball.y;
+
+    if (ball.x < brick.x) testX = brick.x;
+    else if (ball.x > brick.x + brick.w) testX = brick.x + brick.w;
+
+    if (ball.y < brick.y) testY = brick.y;
+    else if (ball.y > brick.y + brick.h) testY = brick.y + brick.h;
+
+    let distX = ball.x - testX;
+    let distY = ball.y - testY;
+    let distance = Math.hypot(distX, distY);
+
+    if (distance <= ball.radius) {
+        let overlap = ball.radius - distance;
+        if (distance === 0) { distX = 1; distY = 0; distance = 1; overlap = ball.radius; }
+        
+        let nx = distX / distance;
+        let ny = distY / distance;
+
+        ball.x += nx * overlap;
+        ball.y += ny * overlap;
+
+        let dot = (ball.dx * nx) + (ball.dy * ny);
+        ball.dx -= 2 * dot * nx;
+        ball.dy -= 2 * dot * ny;
+
+        enforceBallSpeed(ball);
+        return true;
     }
+    return false;
 }
 
 export function resolvePaddleCollision(ball, paddle) {
-    let collidePoint = ball.x - (paddle.x + paddle.width / 2);
-    collidePoint = collidePoint / (paddle.width / 2);
-    collidePoint = Math.max(-1, Math.min(1, collidePoint));
-
-    let angle = collidePoint * (Math.PI / 3); // Ângulo máximo de 60 graus
-    let currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
-    let speed = Math.max(currentSpeed, 4.5);
-
-    ball.dx = speed * Math.sin(angle);
-    ball.dy = -speed * Math.cos(angle);
-    ball.y = paddle.y - ball.radius - 1;
+    ball.y = paddle.y - ball.radius;
+    
+    let hitPoint = ball.x - (paddle.x + paddle.width / 2);
+    let normalizedHit = hitPoint / (paddle.width / 2);
+    normalizedHit = Math.max(-1, Math.min(1, normalizedHit));
+    
+    let bounceAngle = normalizedHit * (Math.PI / 3); 
+    let targetSpeed = ball.baseSpeed || Math.hypot(ball.dx, ball.dy);
+    
+    ball.dx = targetSpeed * Math.sin(bounceAngle);
+    ball.dy = -targetSpeed * Math.cos(bounceAngle);
+    
+    enforceBallSpeed(ball);
 }

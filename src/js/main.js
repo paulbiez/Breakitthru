@@ -4,7 +4,6 @@ import { IosPicker } from './IosPicker.js';
 import { initInputs } from './input.js';
 import { setBgmVolume, setSfxVolume, toggleBgmMute, toggleSfxMute, getAudioState, pauseBgm, playSound } from './audio.js';
 
-// Detecção de motor web para escopo de estilos
 function detectEngine() {
     const ua = navigator.userAgent;
     const body = document.body;
@@ -45,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${selected}`;
     });
 
-    // --- MUDANÇA AQUI: Libera a raquete no Prepare-se e impede lançamento antecipado ---
     initInputs(canvas, game.paddle, 
         { onLaunch: () => {
             if (!game.levelIntroActive && !game.prepareActive && !game.deathPauseActive) {
@@ -54,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }}, 
         () => game.deathPauseActive || game.warpAnimationActive || game.victoryExplosionActive
     );
-    // ----------------------------------------------------------------------------------
 
     window.addEventListener("orientationchange", () => {
         setTimeout(() => {
@@ -105,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnHudSfx) btnHudSfx.style.opacity = state.isSfxMuted ? "0.4" : "1.0";
     }
 
-    // --- CONTROLES DE SOM ---
     const bgmSlider = document.getElementById('bgmVolumeSlider');
     if (bgmSlider) {
         ['input', 'change'].forEach(evt => {
@@ -128,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sfxSlider.addEventListener('change', () => playSound('wall'));
     }
 
-    // --- BOTÕES HUD ---
     const btnPause = document.getElementById('btnPause');
     if (btnPause) {
         btnPause.addEventListener('click', () => {
@@ -156,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- SUBMENUS DE CONFIGURAÇÃO ---
     const paddleSlider = document.getElementById('paddleSlider');
     function updatePaddlePreview(val) {
         const lvl = parseInt(val, 10);
@@ -344,9 +338,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('#gameOverMenu .btn-quit')?.addEventListener('click', () => game.quitToMainMenu());
     document.querySelector('#winOverlay .btn-quit')?.addEventListener('click', () => game.quitToMainMenu());
 
-    function gameLoop() {
-        game.update();
+    let lastTime = performance.now();
+
+    function gameLoop(timestamp) {
+        const dt = timestamp - lastTime;
+        lastTime = timestamp;
+        
+        game.update(dt);
         game.draw();
+        
         requestAnimationFrame(gameLoop);
     }
     requestAnimationFrame(gameLoop);

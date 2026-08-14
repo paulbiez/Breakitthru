@@ -1,38 +1,32 @@
 // src/js/levels.js
-
 export function getLevelPattern(level) {
     const patterns = {
-        // FASE 1: "C M" com Bumpers Pinball e tijolos 16-bits
         1: [
-            [1, 1, 1, 0, 1, 0, 0, 0, 1], // Linha Vermelha
-            [1, 0, 0, 0, 1, 1, 0, 1, 1], // Linha Laranja
-            [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Amarela
-            [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Verde Limão
-            [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Verde Escuro
-            [1, 0, 0, 0, 1, 0, 0, 0, 1], // Linha Ciano
-            [1, 1, 1, 0, 1, 0, 0, 0, 1], // Linha Azul Claro
+            [1, 1, 1, 0, 1, 0, 0, 0, 1], 
+            [1, 0, 0, 0, 1, 1, 0, 1, 1], 
+            [1, 0, 0, 0, 1, 0, 1, 0, 1], 
+            [1, 0, 0, 0, 1, 0, 1, 0, 1], 
+            [1, 0, 0, 0, 1, 0, 1, 0, 1], 
+            [1, 0, 0, 0, 1, 0, 0, 0, 1], 
+            [1, 1, 1, 0, 1, 0, 0, 0, 1], 
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 7, 0, 0, 0, 7, 0, 0]  // Bumpers Pinball (Verde e Amarelo)
+            [0, 0, 7, 0, 0, 0, 7, 0, 0]  
         ],
-
-        // FASE 2: A ESPIRAL (Entrada Top-Left + Paredes Douradas + Núcleo Amarelo de 3 Hits com Rachadura)
         2: [
             [5, 0, 5, 5, 5, 5, 5, 5, 5],
             [5, 0, 5, 0, 0, 0, 0, 0, 5],
             [5, 0, 5, 0, 5, 5, 5, 0, 5],
             [5, 0, 5, 0, 0, 0, 5, 0, 5],
-            [5, 0, 5, 0, 3, 0, 5, 0, 5], // Núcleo Amarelo
-            [5, 0, 5, 0, 3, 0, 5, 0, 5], // Núcleo Amarelo
-            [5, 0, 5, 0, 3, 0, 5, 0, 5], // Núcleo Amarelo
+            [5, 0, 5, 0, 3, 0, 5, 0, 5], 
+            [5, 0, 5, 0, 3, 0, 5, 0, 5], 
+            [5, 0, 5, 0, 3, 0, 5, 0, 5], 
             [5, 0, 5, 0, 5, 0, 5, 0, 5],
             [5, 0, 5, 0, 0, 0, 5, 0, 5],
             [5, 0, 5, 5, 5, 5, 5, 0, 5],
             [5, 0, 0, 0, 0, 0, 0, 0, 5],
             [5, 5, 5, 5, 5, 5, 5, 5, 5]
         ],
-
-        // Fases 3 a 10
         3: [
             [1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 3, 3, 3, 1, 3, 3, 3, 1],
@@ -84,9 +78,7 @@ export function getLevelPattern(level) {
             [1, 1, 1, 1, 1, 1, 1, 1, 1]
         ]
     };
-
     if (patterns[level]) return patterns[level];
-    
     let base = patterns[((level - 1) % 10) + 1];
     return base.map(row => row.map(val => (val === 1 && level > 12 ? 3 : val)));
 }

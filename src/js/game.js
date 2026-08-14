@@ -1,5 +1,5 @@
 // src/js/game.js
-import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
+import { isColliding, resolveBrickCollision, resolvePaddleCollision, enforceBallSpeed } from './physics.js';
 import { playSound, initAudio, playMp3, playBgm, pauseBgm, stopBgm } from './audio.js';
 import { TOTAL_LEVELS, BRICK_TYPES, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 import { getLevelPattern } from './levels.js';
@@ -97,13 +97,13 @@ export class Game {
     startGame() {
         initAudio();
         playBgm();
-        this.gameRunning = true;
         this.score = 0;
-        this.lives = 5;
+        this.lives = this.INITIAL_LIVES;
         document.querySelectorAll('#menu, #settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
                 .forEach(el => el.style.display = 'none');
         this.initLevel(this.currentLevel);
         this.resetBall('intro');
+        this.gameRunning = true;
     }
 
     resumeGame() { 
@@ -128,17 +128,20 @@ export class Game {
     continueGame() { 
         document.getElementById('gameOverMenu').style.display = 'none'; 
         this.lives = 3; 
-        this.gameRunning = true; 
         playBgm();
         this.resetBall('respawn'); 
+        this.gameRunning = true; 
     }
 
     clearActiveBonuses() {
         this.applyPaddleSettings();
         this.paddle.glue = false;
         this.electricShieldActive = false;
+        this.warpDoorActive = false;
+        this.isCapsuleOnScreen = false;
         this.applyBallSettings();
         this.gigaBallTimer = 0;
+        this.bonuses = [];
     }
 
     generateLevelPattern(level, customColors = null) {
@@ -225,11 +228,8 @@ export class Game {
     }
 
     initLevel(level) {
+        this.clearActiveBonuses();
         this.bricks = [];
-        this.bonuses = [];
-        this.isCapsuleOnScreen = false;
-        this.warpDoorActive = false;
-        this.electricShieldActive = false;
         this.warpAnimationActive = false;
         this.deathPauseActive = false;
 
@@ -319,7 +319,7 @@ export class Game {
         this.balls = [{
             x: this.paddle.x + this.paddle.width / 2,
             y: this.paddle.y - radius - 2,
-            dx: 0, dy: 0, radius: radius, stuck: true
+            dx: 0, dy: 0, radius: radius, stuck: true, baseSpeed: 0
         }];
 
         this.levelIntroActive = false;
@@ -350,6 +350,7 @@ export class Game {
                 let randomDir = Math.random() > 0.5 ? 1 : -1;
                 ball.dx = randomDir * (initialDxRange + Math.random() * 1.5);
                 ball.dy = initialDy;
+                ball.baseSpeed = Math.hypot(ball.dx, ball.dy);
             }
         });
     }
@@ -359,7 +360,10 @@ export class Game {
         let newBalls = [];
         this.balls.forEach(b => {
             for (let i = 0; i < 2; i++) {
-                newBalls.push({ x: b.x, y: b.y, dx: (Math.random() - 0.5) * 6, dy: -Math.abs(b.dy || 4.5), radius: radius, stuck: false });
+                let dx = (Math.random() - 0.5) * 6;
+                let dy = -Math.abs(b.dy || 4.5);
+                let speed = Math.hypot(dx, dy);
+                newBalls.push({ x: b.x, y: b.y, dx: dx, dy: dy, radius: radius, stuck: false, baseSpeed: speed });
             }
         });
         this.balls = this.balls.concat(newBalls);
@@ -409,13 +413,16 @@ export class Game {
 
     triggerWarpLaserAnimation() { this.warpAnimationActive = true; this.warpLaserTimer = 35; playSound('laserZoom'); }
 
-    update() {
+    update(dt) {
         if (!this.gameRunning || this.victoryExplosionActive) return;
+
+        if (dt > 50) dt = 16.666; 
+        const ts = dt / 16.666;
 
         let isPausedForIntro = false;
 
         if (this.deathPauseActive) {
-            this.deathPauseTimer--;
+            this.deathPauseTimer -= ts;
             if (this.deathPauseTimer <= 0) {
                 this.deathPauseActive = false;
                 if (this.lives <= 0) {
@@ -431,7 +438,7 @@ export class Game {
             isPausedForIntro = true;
         } 
         else if (this.levelIntroActive) {
-            this.levelIntroTimer--;
+            this.levelIntroTimer -= ts;
             if (this.levelIntroTimer <= 0) {
                 this.levelIntroActive = false;
                 this.launchBalls();
@@ -439,7 +446,7 @@ export class Game {
             isPausedForIntro = true;
         } 
         else if (this.prepareActive) {
-            this.prepareTimer--;
+            this.prepareTimer -= ts;
             if (this.prepareTimer <= 0) {
                 this.prepareActive = false;
                 this.launchBalls();
@@ -448,7 +455,7 @@ export class Game {
         }
 
         if (this.warpAnimationActive && !isPausedForIntro) {
-            this.warpLaserTimer--;
+            this.warpLaserTimer -= ts;
             if (this.warpLaserTimer <= 0) {
                 this.warpAnimationActive = false;
                 this.advanceToNextLevel();
@@ -466,25 +473,24 @@ export class Game {
                     ball.y = this.paddle.y - ball.radius - 2;
                 }
             });
-            this.draw();
             return; 
         }
 
         if (this.gigaBallTimer > 0) {
-            this.gigaBallTimer--;
+            this.gigaBallTimer -= ts;
             if (this.gigaBallTimer <= 0) { this.applyBallSettings(); }
         }
 
         this.bricks.forEach(b => {
             if (b.status === 1) {
                 if (b.isMoving) {
-                    b.x += b.speed * b.moveDir;
+                    b.x += b.speed * b.moveDir * ts;
                     if (b.x > b.startX + 40 || b.x < b.startX - 40) {
                         b.moveDir *= -1;
                     }
                 }
                 if (b.flashTimer > 0) {
-                    b.flashTimer--;
+                    b.flashTimer -= ts;
                 }
             }
         });
@@ -497,21 +503,26 @@ export class Game {
                 ball.x = this.paddle.x + this.paddle.width / 2;
                 ball.y = this.paddle.y - ball.radius - 2;
             } else {
-                ball.x += ball.dx; ball.y += ball.dy;
+                ball.x += ball.dx * ts; 
+                ball.y += ball.dy * ts;
 
-                if (Math.abs(ball.dx) < 0.3) ball.dx = (Math.random() > 0.5 ? 1 : -1) * 2.5;
+                if (ball.x + ball.radius > this.canvas.width) { ball.x = this.canvas.width - ball.radius; ball.dx *= -1; playSound('wall'); enforceBallSpeed(ball); } 
+                else if (ball.x - ball.radius < 0) { ball.x = ball.radius; ball.dx *= -1; playSound('wall'); enforceBallSpeed(ball); }
 
-                if (ball.x + ball.radius > this.canvas.width) { ball.x = this.canvas.width - ball.radius; ball.dx *= -1; playSound('wall'); } 
-                else if (ball.x - ball.radius < 0) { ball.x = ball.radius; ball.dx *= -1; playSound('wall'); }
+                if (ball.y - ball.radius < this.topWallY + 4) { ball.y = this.topWallY + 4 + ball.radius; ball.dy = Math.abs(ball.dy); playSound('wall'); enforceBallSpeed(ball); }
 
-                if (ball.y - ball.radius < this.topWallY + 4) { ball.y = this.topWallY + 4 + ball.radius; ball.dy = Math.abs(ball.dy); playSound('wall'); }
-
-                if (ball.y + ball.radius > this.paddle.y && ball.y - ball.radius < this.paddle.y + this.paddle.height && ball.x > this.paddle.x && ball.x < this.paddle.x + this.paddle.width) {
+                if (ball.dy > 0 && ball.y + ball.radius > this.paddle.y && ball.y - ball.radius < this.paddle.y + this.paddle.height && ball.x > this.paddle.x && ball.x < this.paddle.x + this.paddle.width) {
                     playSound('paddle');
-                    if (this.paddle.glue) { ball.stuck = true; ball.dx = 0; ball.dy = 0; } else { resolvePaddleCollision(ball, this.paddle); }
+                    if (this.paddle.glue) { 
+                        ball.stuck = true; ball.dx = 0; ball.dy = 0; 
+                    } else { 
+                        resolvePaddleCollision(ball, this.paddle); 
+                    }
                 }
 
-                if (this.electricShieldActive && ball.y + ball.radius >= this.shieldY) { ball.dy = -Math.abs(ball.dy); this.electricShieldActive = false; playSound('shield'); }
+                if (this.electricShieldActive && ball.y + ball.radius >= this.shieldY) { 
+                    ball.dy = -Math.abs(ball.dy); this.electricShieldActive = false; playSound('shield'); enforceBallSpeed(ball); 
+                }
 
                 if (ball.y + ball.radius > this.canvas.height) {
                     this.balls.splice(bIndex, 1);
@@ -546,7 +557,6 @@ export class Game {
                     continue;
                 }
 
-                // CORREÇÃO: Resolução inteligente de colisões simultâneas (Anti-Tunneling)
                 let hitBricks = [];
 
                 this.bricks.forEach(b => {
@@ -555,63 +565,61 @@ export class Game {
                             let cx = b.x + b.w / 2; let cy = b.y + b.h / 2; 
                             let bumperRadius = (b.w / 2) * 1.45; 
                             let dx = ball.x - cx; let dy = ball.y - cy;
-                            let dist = Math.sqrt(dx*dx + dy*dy);
+                            let dist = Math.hypot(dx, dy);
                             
-                            if (dist < ball.radius + bumperRadius) {
-                                if (dist === 0) { dx = 1; dist = 1; }
-                                let nx = dx / dist; let ny = dy / dist;
-                                let currentSpeed = Math.sqrt(ball.dx*ball.dx + ball.dy*ball.dy);
-                                let newSpeed = Math.min(currentSpeed * 1.25, 8.0);
-                                ball.dx = nx * newSpeed; ball.dy = ny * newSpeed;
-
-                                let overlap = (ball.radius + bumperRadius) - dist + 1;
-                                ball.x += nx * overlap; ball.y += ny * overlap;
-                                
-                                playSound('bumper');
-                                b.flashTimer = 20; 
+                            if (dist <= ball.radius + bumperRadius) {
+                                hitBricks.push({brick: b, dist: dist, isBumper: true, bumperRadius: bumperRadius});
                             }
                         } else {
                             if (isColliding(ball, { x: b.x, y: b.y, w: b.w, h: b.h })) {
-                                hitBricks.push(b);
+                                hitBricks.push({brick: b, dist: Math.hypot(ball.x - (b.x + b.w/2), ball.y - (b.y + b.h/2)), isBumper: false});
                             }
                         }
                     }
                 });
 
                 if (hitBricks.length > 0) {
-                    // Impede o loop infinito resolvendo a física APENAS com o bloco mais próximo
-                    let closestBrick = hitBricks[0];
-                    let minDist = Infinity;
-                    
-                    hitBricks.forEach(b => {
-                        let cx = b.x + b.w / 2;
-                        let cy = b.y + b.h / 2;
-                        let dist = Math.hypot(ball.x - cx, ball.y - cy);
-                        if (dist < minDist) {
-                            minDist = dist;
-                            closestBrick = b;
-                        }
-                    });
+                    hitBricks.sort((a, b) => a.dist - b.dist);
+                    let closest = hitBricks[0];
+                    let b = closest.brick;
 
-                    // Modifica o vetor de velocidade uma única vez
-                    resolveBrickCollision(ball, closestBrick, closestBrick.w, closestBrick.h);
-                    playSound('brick');
+                    if (closest.isBumper) {
+                        let cx = b.x + b.w / 2; let cy = b.y + b.h / 2; 
+                        let dx = ball.x - cx; let dy = ball.y - cy;
+                        let dist = closest.dist;
+                        if (dist === 0) { dx = 1; dist = 1; }
+                        
+                        let nx = dx / dist; let ny = dy / dist;
+                        let overlap = (ball.radius + closest.bumperRadius) - dist + 1;
+                        ball.x += nx * overlap; ball.y += ny * overlap;
+                        
+                        let dot = (ball.dx * nx) + (ball.dy * ny);
+                        ball.dx -= 2 * dot * nx;
+                        ball.dy -= 2 * dot * ny;
+                        enforceBallSpeed(ball);
 
-                    // Aplica efeitos e dano visual a TODOS os blocos tocados
-                    hitBricks.forEach(b => {
-                        if (!b.indestructible) {
-                            b.hits--;
-                            if (b.hits <= 0) {
-                                b.status = 0; this.score += b.points;
-                                if (b.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
+                        playSound('bumper');
+                        b.flashTimer = 20;
+                    } else {
+                        resolveBrickCollision(ball, b);
+                        playSound('brick');
+                    }
+
+                    hitBricks.forEach(hit => {
+                        let bk = hit.brick;
+                        if (!bk.indestructible && !bk.isBumper) {
+                            bk.hits--;
+                            if (bk.hits <= 0) {
+                                bk.status = 0; this.score += bk.points;
+                                if (bk.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
                                     const capsules = ['C', 'E', 'S', 'H', 'G', 'D', 'P', 'B'];
                                     let capType = capsules[Math.floor(Math.random() * capsules.length)];
-                                    this.bonuses.push({ x: b.x + b.w / 2 - 12, y: b.y, type: capType, speed: 2 });
+                                    this.bonuses.push({ x: bk.x + bk.w / 2 - 12, y: bk.y, type: capType, speed: 2 });
                                     this.isCapsuleOnScreen = true;
                                 }
                             } else {
-                                if (b.hits === 2) b.color = '#DDDD00'; 
-                                if (b.hits === 1) b.color = '#AAAA00'; 
+                                if (bk.hits === 2) bk.color = '#DDDD00'; 
+                                if (bk.hits === 1) bk.color = '#AAAA00'; 
                             }
                         }
                     });
@@ -624,7 +632,7 @@ export class Game {
 
         for (let i = this.bonuses.length - 1; i >= 0; i--) {
             let b = this.bonuses[i];
-            b.y += b.speed;
+            b.y += b.speed * ts;
 
             if (b.y + 24 > this.paddle.y && b.y < this.paddle.y + this.paddle.height && b.x + 24 > this.paddle.x && b.x < this.paddle.x + this.paddle.width) {
                 playSound('bonus');
@@ -635,7 +643,7 @@ export class Game {
                     let expandedWidth = this.paddle.width * 1.5;
                     this.paddle.width = Math.min(expandedWidth, this.canvas.width - 20);
                     if (this.paddle.x + this.paddle.width > this.canvas.width) this.paddle.x = this.canvas.width - this.paddle.width;
-                } else if (b.type === 'S') { this.balls.forEach(ball => { ball.dx *= 0.65; ball.dy *= 0.65; }); } 
+                } else if (b.type === 'S') { this.balls.forEach(ball => { ball.dx *= 0.65; ball.dy *= 0.65; ball.baseSpeed = Math.hypot(ball.dx, ball.dy); }); } 
                 else if (b.type === 'H') { this.electricShieldActive = true; } 
                 else if (b.type === 'G') {
                     this.balls.forEach(ball => { ball.radius = 14; });
@@ -651,8 +659,6 @@ export class Game {
                 this.isCapsuleOnScreen = false;
             }
         }
-
-        this.draw();
     }
 
     advanceToNextLevel() {
