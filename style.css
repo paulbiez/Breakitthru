@@ -162,149 +162,105 @@ h2 {
     touch-action: manipulation; 
 }
 
-/* --- ESTILIZAÇÃO DO TAMBOR iOS (IosPicker) --- */
+/* Modal e Card do Picker */
 #iosPickerOverlay { 
     position: absolute; 
     top: 0; 
     left: 0; 
     width: 100%; 
     height: 100%; 
-    background: rgba(0, 0, 0, 0.75); 
-    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.85); 
     display: none; 
     justify-content: center; 
     align-items: center; 
     z-index: 30; 
-    touch-action: none;
 }
 
-.ios-picker-card { 
-    background: rgba(28, 28, 30, 0.95); 
-    border: 1px solid rgba(255, 255, 255, 0.15); 
+.picker-card { 
+    background: #1c1c1e; 
     border-radius: 16px; 
-    width: min(270px, 85%); 
-    box-shadow: 0 20px 40px rgba(0,0,0,0.8); 
-    overflow: hidden; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-}
-
-.ios-picker-header { 
-    padding: 14px; 
-    width: 100%; 
+    padding: 20px; 
+    width: min(280px, 88%); 
     text-align: center; 
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+    border: 1px solid rgba(255,255,255,0.15); 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.9);
 }
 
-.ios-picker-title { 
-    font-size: 1.1rem; 
-    font-weight: 700; 
-    color: #FFD700; 
+/* --- ROLO 3D TIPO iOS --- */
+.picker-wheel-container {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    margin: 10px 0;
+    overflow: hidden;
+    perspective: 1000px;
+    touch-action: none;
+    cursor: grab;
 }
 
-.ios-picker-body { 
-    padding: 10px 0; 
-    width: 100%; 
-    display: flex; 
-    justify-content: center; 
+/* Faixa do meio que destaca a fase selecionada */
+.picker-wheel-selection {
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    width: 90%;
+    height: 36px;
+    margin-top: -18px;
+    background: rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 2;
 }
 
-.ios-picker-wheel-wrap { 
-    position: relative; 
-    width: 100%; 
-    height: 200px; 
-    perspective: 1000px; 
-    overflow: hidden; 
-    cursor: grab; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
+/* Sombras de efeito cilindro no topo e na base */
+.picker-wheel-container::before,
+.picker-wheel-container::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    pointer-events: none;
+    z-index: 3;
+}
+.picker-wheel-container::before {
+    top: 0;
+    background: linear-gradient(to bottom, #1c1c1e, transparent);
+}
+.picker-wheel-container::after {
+    bottom: 0;
+    background: linear-gradient(to top, #1c1c1e, transparent);
 }
 
-/* Lente / Faixa de Seleção do Meio */
-.ios-picker-selection-bar { 
-    position: absolute; 
-    top: 50%; 
-    left: 10%; 
-    width: 80%; 
-    height: 40px; 
-    transform: translateY(-50%); 
-    background: rgba(255, 255, 255, 0.12); 
-    border-top: 1px solid rgba(255, 255, 255, 0.3); 
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3); 
-    border-radius: 8px; 
-    pointer-events: none; 
-    z-index: 2; 
+.picker-wheel-list {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 36px;
+    margin-top: -18px;
+    transform-style: preserve-3d;
 }
 
-/* Sombra Gradiente nas extremidades para o efeito cilindro */
-.ios-picker-wheel-wrap::before,
-.ios-picker-wheel-wrap::after { 
-    content: ""; 
-    position: absolute; 
-    left: 0; 
-    width: 100%; 
-    height: 75px; 
-    pointer-events: none; 
-    z-index: 3; 
-}
-.ios-picker-wheel-wrap::before { 
-    top: 0; 
-    background: linear-gradient(to bottom, rgba(28,28,30,0.95), transparent); 
-}
-.ios-picker-wheel-wrap::after { 
-    bottom: 0; 
-    background: linear-gradient(to top, rgba(28,28,30,0.95), transparent); 
+.picker-wheel-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 36px;
+    line-height: 36px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #8e8e93;
+    text-align: center;
+    backface-visibility: hidden;
+    transition: color 0.1s;
 }
 
-.ios-picker-wheel { 
-    position: absolute; 
-    top: 50%; 
-    margin-top: -20px; 
-    width: 100%; 
-    height: 40px; 
-    transform-style: preserve-3d; 
+.picker-wheel-item.selected {
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 800;
 }
-
-.ios-picker-item { 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 40px; 
-    line-height: 40px; 
-    text-align: center; 
-    font-size: 1.15rem; 
-    font-weight: 600; 
-    color: #8e8e93; 
-    transition: color 0.15s, opacity 0.15s; 
-    backface-visibility: hidden; 
-}
-
-.ios-picker-item.selected { 
-    color: #ffffff; 
-    font-weight: 800; 
-    font-size: 1.3rem; 
-    text-shadow: 0 0 10px rgba(255,255,255,0.5); 
-}
-
-.ios-picker-footer { 
-    display: flex; 
-    width: 100%; 
-    border-top: 1px solid rgba(255, 255, 255, 0.1); 
-}
-
-.ios-picker-btn { 
-    flex: 1; 
-    padding: 12px; 
-    background: transparent; 
-    border: none; 
-    font-size: 1rem; 
-    font-weight: 700; 
-    cursor: pointer; 
-}
-
-.ios-picker-btn:active { background: rgba(255, 255, 255, 0.1); }
-.ios-picker-btn.cancel { color: #ff3b30; border-right: 1px solid rgba(255, 255, 255, 0.1); }
-.ios-picker-btn.confirm { color: #34c759; }

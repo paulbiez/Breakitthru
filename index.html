@@ -4,16 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Breakout Game</title>
-
-<!-- Link com cache-busting v=4 para forçar o celular a atualizar -->
-<link rel="stylesheet" href="./style.css?v=4">
+<link rel="stylesheet" href="./style.css?v=5">
 </head>
 <body>
 
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Botões Flutuantes (Canto Superior Direito) -->
+    <!-- Botões Flutuantes do HUD -->
     <div id="hudControls">
         <button id="btnPause" class="hud-btn" title="Pausar">⏸️</button>
         <button id="btnHudBgm" class="hud-btn" title="Música">🎵</button>
@@ -41,21 +39,18 @@
     <!-- Submenu de Som -->
     <div id="settingsSoundMenu" class="menu-overlay" style="display: none;">
         <h2>Configurações de Som</h2>
-        
         <div class="sound-control-group">
             <label>Música de Fundo <span id="bgmValText">50%</span></label>
             <input type="range" id="bgmVolumeSlider" class="sound-slider" min="0" max="100" value="50">
         </div>
-
         <div class="sound-control-group">
             <label>Sons do Jogo (SFX) <span id="sfxValText">100%</span></label>
             <input type="range" id="sfxVolumeSlider" class="sound-slider" min="0" max="100" value="100">
         </div>
-
         <button id="btnSoundBack" class="menu-btn">Voltar</button>
     </div>
 
-    <!-- Submenus de Configuração -->
+    <!-- Submenu Raquete -->
     <div id="settingsPaddleMenu" class="menu-overlay" style="display: none;">
         <h2>Tamanho da Raquete</h2>
         <button class="menu-btn btn-paddle-size" data-size="small">Pequena</button>
@@ -65,6 +60,7 @@
         <button id="btnPaddleBack" class="menu-btn">Voltar</button>
     </div>
 
+    <!-- Submenu Velocidade da Bola -->
     <div id="settingsBallSpeedMenu" class="menu-overlay" style="display: none;">
         <h2>Velocidade da Bola</h2>
         <button class="menu-btn btn-ball-speed" data-speed="slow">Lenta</button>
@@ -72,6 +68,7 @@
         <button id="btnSpeedBack" class="menu-btn">Voltar</button>
     </div>
 
+    <!-- Submenu Tamanho da Bola -->
     <div id="settingsBallSizeMenu" class="menu-overlay" style="display: none;">
         <h2>Tamanho da Bola</h2>
         <button class="menu-btn btn-ball-size" data-size="small">Pequena</button>
@@ -102,12 +99,17 @@
         <button class="menu-btn btn-quit">Menu Principal</button>
     </div>
 
-    <!-- Modal Picker de Fase -->
+    <!-- Modal do Rolo 3D Customizado (SEM TAG SELECT) -->
     <div id="iosPickerOverlay">
         <div class="picker-card">
             <h2>Selecionar Fase</h2>
-            <select id="pickerSelect" class="picker-select"></select>
-            <button id="pickerConfirmBtn" class="menu-btn btn-start">Confirmar</button>
+            
+            <div class="picker-wheel-container" id="pickerWheelContainer">
+                <div class="picker-wheel-selection"></div>
+                <div class="picker-wheel-list" id="pickerWheelList"></div>
+            </div>
+
+            <button id="pickerConfirmBtn" class="menu-btn btn-start" style="margin-top: 15px;">Confirmar</button>
         </div>
     </div>
 </div>
