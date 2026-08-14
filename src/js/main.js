@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectBtn.innerText = `Selecionar Fase: ${validLevel}`;
     }
 
-    // Instancia o seletor independente
+    // Instancia o tambor 3D iOS
     const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
         let selected = parseInt(level, 10) || 1;
         game.currentLevel = selected;
@@ -84,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnHudSfx) btnHudSfx.style.opacity = state.isSfxMuted ? "0.4" : "1.0";
     }
 
-    // --- CONTROLES DE ÁUDIO NO MENU DE SOM ---
     const bgmSlider = document.getElementById('bgmVolumeSlider');
     if (bgmSlider) {
         bgmSlider.addEventListener('input', (e) => {
@@ -101,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- BOTÕES DE MUTE / PAUSA IN-GAME (HUD) ---
     const btnPause = document.getElementById('btnPause');
     if (btnPause) {
         btnPause.addEventListener('click', () => {
@@ -129,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NAVEGAÇÃO DOS MENUS ---
     const btnSettingsSound = document.getElementById('btnSettingsSound');
     if (btnSettingsSound) {
         btnSettingsSound.addEventListener('click', () => {
