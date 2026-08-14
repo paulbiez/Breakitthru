@@ -2,12 +2,21 @@
 
 export function getLevelPattern(level) {
     const patterns = {
+        // A NOVA FASE 1 (Design "C M" com Bumpers inferiores e tijolo extra)
         1: [
-            [1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1]
+            [1, 1, 1, 0, 1, 0, 0, 0, 1], // Linha Vermelha
+            [1, 0, 0, 0, 1, 1, 0, 1, 1], // Linha Laranja (Bumper antigo removido)
+            [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Amarela
+            [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Verde Limão
+            [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Verde Escuro (Tijolo extra na Col 6)
+            [1, 0, 0, 0, 1, 0, 0, 0, 1], // Linha Ciano
+            [1, 1, 1, 0, 1, 0, 0, 0, 1], // Linha Azul Claro
+            [0, 0, 0, 0, 0, 0, 0, 0, 0], // Espaço vazio para a bola circular
+            [0, 0, 0, 0, 0, 0, 0, 0, 0], // Espaço vazio para a bola circular
+            [0, 0, 7, 0, 0, 0, 7, 0, 0]  // Bumpers Esféricos (Col 2 e Col 6)
         ],
+        
+        // Fases genéricas de 2 a 10 (Você pode alterar depois)
         2: [
             [1, 0, 1, 0, 1, 0, 1, 0, 1],
             [0, 1, 0, 1, 0, 1, 0, 1, 0],
@@ -66,7 +75,6 @@ export function getLevelPattern(level) {
         ]
     };
 
-    // Para as fases 11 a 20, gera variações desafiadoras
     if (patterns[level]) return patterns[level];
     
     let base = patterns[((level - 1) % 10) + 1];
