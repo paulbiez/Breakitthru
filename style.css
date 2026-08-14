@@ -24,7 +24,6 @@ body {
     padding: 5px;
 }
 
-/* Container Responsivo com Aspect Ratio 2:3 */
 #gameContainer { 
     position: relative; 
     width: min(400px, 98vw); 
@@ -38,14 +37,12 @@ body {
     overflow: hidden; 
 }
 
-/* O Canvas escala perfeitamente sem perder os 400x600 internos */
 canvas { 
     display: block; 
     width: 100%; 
     height: 100%; 
 }
 
-/* Botões do HUD (Canto Superior Direito) */
 #hudControls { 
     position: absolute; 
     top: 6px; 
@@ -54,6 +51,7 @@ canvas {
     gap: 4px; 
     z-index: 10; 
     pointer-events: auto; 
+    touch-action: manipulation;
 }
 
 .hud-btn { 
@@ -69,13 +67,11 @@ canvas {
     justify-content: center; 
     align-items: center; 
     transition: background 0.2s; 
+    touch-action: manipulation;
 }
 
-.hud-btn:active { 
-    background: #444; 
-}
+.hud-btn:active { background: #444; }
 
-/* Menus Overlay */
 .menu-overlay { 
     position: absolute; 
     top: 0; 
@@ -90,6 +86,8 @@ canvas {
     gap: 12px; 
     z-index: 20; 
     padding: 15px;
+    pointer-events: auto;
+    touch-action: manipulation;
 }
 
 h1 { 
@@ -117,12 +115,10 @@ h2 {
     cursor: pointer; 
     box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
     transition: transform 0.1s, background 0.2s; 
+    touch-action: manipulation;
 }
 
-.menu-btn:active { 
-    transform: scale(0.96); 
-}
-
+.menu-btn:active { transform: scale(0.96); }
 .btn-start { background: #00e600; }
 .btn-settings { background: #ff9900; }
 .btn-danger { background: #ff2a2a; }
@@ -133,7 +129,6 @@ h2 {
     box-shadow: 0 0 12px rgba(0, 230, 0, 0.8); 
 }
 
-/* Sliders de Volume */
 .sound-control-group { 
     width: min(240px, 85%); 
     display: flex; 
@@ -167,37 +162,149 @@ h2 {
     touch-action: manipulation; 
 }
 
-/* Picker Modal */
+/* --- ESTILIZAÇÃO DO TAMBOR iOS (IosPicker) --- */
 #iosPickerOverlay { 
     position: absolute; 
     top: 0; 
     left: 0; 
     width: 100%; 
     height: 100%; 
-    background: rgba(0,0,0,0.85); 
+    background: rgba(0, 0, 0, 0.75); 
+    backdrop-filter: blur(4px);
     display: none; 
     justify-content: center; 
     align-items: center; 
     z-index: 30; 
+    touch-action: none;
 }
 
-.picker-card { 
-    background: #222; 
-    border-radius: 12px; 
-    padding: 20px; 
-    width: min(260px, 85%); 
-    text-align: center; 
-    border: 1px solid #444; 
+.ios-picker-card { 
+    background: rgba(28, 28, 30, 0.95); 
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    border-radius: 16px; 
+    width: min(270px, 85%); 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.8); 
+    overflow: hidden; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
 }
 
-.picker-select { 
+.ios-picker-header { 
+    padding: 14px; 
     width: 100%; 
-    padding: 10px; 
-    font-size: 1.1rem; 
-    border-radius: 8px; 
-    background: #333; 
-    color: #fff; 
-    border: 1px solid #555; 
-    margin: 15px 0; 
-    outline: none; 
+    text-align: center; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
 }
+
+.ios-picker-title { 
+    font-size: 1.1rem; 
+    font-weight: 700; 
+    color: #FFD700; 
+}
+
+.ios-picker-body { 
+    padding: 10px 0; 
+    width: 100%; 
+    display: flex; 
+    justify-content: center; 
+}
+
+.ios-picker-wheel-wrap { 
+    position: relative; 
+    width: 100%; 
+    height: 200px; 
+    perspective: 1000px; 
+    overflow: hidden; 
+    cursor: grab; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+}
+
+/* Lente / Faixa de Seleção do Meio */
+.ios-picker-selection-bar { 
+    position: absolute; 
+    top: 50%; 
+    left: 10%; 
+    width: 80%; 
+    height: 40px; 
+    transform: translateY(-50%); 
+    background: rgba(255, 255, 255, 0.12); 
+    border-top: 1px solid rgba(255, 255, 255, 0.3); 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3); 
+    border-radius: 8px; 
+    pointer-events: none; 
+    z-index: 2; 
+}
+
+/* Sombra Gradiente nas extremidades para o efeito cilindro */
+.ios-picker-wheel-wrap::before,
+.ios-picker-wheel-wrap::after { 
+    content: ""; 
+    position: absolute; 
+    left: 0; 
+    width: 100%; 
+    height: 75px; 
+    pointer-events: none; 
+    z-index: 3; 
+}
+.ios-picker-wheel-wrap::before { 
+    top: 0; 
+    background: linear-gradient(to bottom, rgba(28,28,30,0.95), transparent); 
+}
+.ios-picker-wheel-wrap::after { 
+    bottom: 0; 
+    background: linear-gradient(to top, rgba(28,28,30,0.95), transparent); 
+}
+
+.ios-picker-wheel { 
+    position: absolute; 
+    top: 50%; 
+    margin-top: -20px; 
+    width: 100%; 
+    height: 40px; 
+    transform-style: preserve-3d; 
+}
+
+.ios-picker-item { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 40px; 
+    line-height: 40px; 
+    text-align: center; 
+    font-size: 1.15rem; 
+    font-weight: 600; 
+    color: #8e8e93; 
+    transition: color 0.15s, opacity 0.15s; 
+    backface-visibility: hidden; 
+}
+
+.ios-picker-item.selected { 
+    color: #ffffff; 
+    font-weight: 800; 
+    font-size: 1.3rem; 
+    text-shadow: 0 0 10px rgba(255,255,255,0.5); 
+}
+
+.ios-picker-footer { 
+    display: flex; 
+    width: 100%; 
+    border-top: 1px solid rgba(255, 255, 255, 0.1); 
+}
+
+.ios-picker-btn { 
+    flex: 1; 
+    padding: 12px; 
+    background: transparent; 
+    border: none; 
+    font-size: 1rem; 
+    font-weight: 700; 
+    cursor: pointer; 
+}
+
+.ios-picker-btn:active { background: rgba(255, 255, 255, 0.1); }
+.ios-picker-btn.cancel { color: #ff3b30; border-right: 1px solid rgba(255, 255, 255, 0.1); }
+.ios-picker-btn.confirm { color: #34c759; }
