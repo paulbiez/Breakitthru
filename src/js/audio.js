@@ -146,8 +146,14 @@ export function getAudioState() {
 }
 
 export function playSound(type) {
+    // 1. FORÇA A INICIALIZAÇÃO / ACORDA O ÁUDIO AQUI
+    initAudio(); 
+
     if (isSfxMuted || sfxVolume <= 0) return;
-    if (!audioCtx || audioCtx.state !== 'running') return;
+    
+    // 2. REMOVIDA A TRAVA "audioCtx.state !== 'running'" PARA NÃO MATAR O SOM PREMATURAMENTE
+    if (!audioCtx) return; 
+
     try {
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
