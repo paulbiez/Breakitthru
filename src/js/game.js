@@ -240,7 +240,7 @@ export class Game {
     resetBall(reason = 'none') {
         this.clearActiveBonuses();
         
-        // Garante que a raquete volte ao normal após as deformações das animações de morte
+        // Garante que a raquete volte ao normal após as deformações das animações dramáticas
         this.paddle.y = 520;
         this.paddle.height = 12;
         this.paddle.alpha = 1.0;
@@ -266,7 +266,7 @@ export class Game {
             this.levelIntroTimer = 120;
         } else if (reason === 'respawn') {
             this.prepareActive = true;
-            this.prepareTimer = 240;
+            this.prepareTimer = 180; // 3 Segundos de "Prepare-se"
         } else {
             this.launchBalls();
         }
@@ -363,7 +363,7 @@ export class Game {
                     this.resetBall('respawn'); 
                 }
             }
-            isPausedForIntro = true;
+            isPausedForIntro = true; // Impede físicas e movimentos normais durante o death timer
         } 
         else if (this.levelIntroActive) {
             this.levelIntroTimer--;
@@ -440,28 +440,31 @@ export class Game {
                 if (ball.y + ball.radius > this.canvas.height) {
                     this.balls.splice(bIndex, 1);
                     
+                    // --- O MOMENTO DA MORTE ---
                     if (this.balls.length === 0 && !this.deathPauseActive) {
                         this.bonuses = []; 
                         playMp3('src/assets/scream1.mp3'); 
                         this.lives--;
+                        
                         this.deathPauseActive = true;
-                        this.deathPauseTimer = 180; 
+                        this.deathPauseTimer = 300; // 5 Segundos (4 de animação dramática + 1 de silêncio/pausa vazia)
 
-                        // SORTEIA A ANIMAÇÃO (1, 2, 3 ou 4) com 25% de chance
+                        // Sorteia a Animação Dramática (1, 2, 3 ou 4) com 25% de chance
                         this.deathAnimType = Math.floor(Math.random() * 4) + 1;
                         this.deathParticles = [];
                         this.paddle.alpha = 1.0;
                         this.paddle.extraScale = 0;
 
-                        if (this.deathAnimType === 1) { // 1. EXPLOSÃO (Gera partículas da quebra)
+                        if (this.deathAnimType === 1) { 
+                            // 1. EXPLOSÃO (Velocidade e decaimento divididos por 4 para efeito Slow Motion)
                             for (let i = 0; i < 40; i++) {
                                 this.deathParticles.push({
                                     x: this.paddle.x + Math.random() * this.paddle.width,
                                     y: this.paddle.y + Math.random() * this.paddle.height,
-                                    dx: (Math.random() - 0.5) * 8,
-                                    dy: (Math.random() - 0.8) * 8,
+                                    dx: (Math.random() - 0.5) * 4,
+                                    dy: (Math.random() - 0.8) * 4,
                                     size: Math.random() * 4 + 2,
-                                    life: 1.0, decay: Math.random() * 0.02 + 0.015,
+                                    life: 1.0, decay: Math.random() * 0.003 + 0.002,
                                     color: Math.random() > 0.5 ? '#ffffff' : '#aaaaaa'
                                 });
                             }
@@ -589,7 +592,7 @@ export class Game {
             this.ctx.stroke(); this.ctx.shadowBlur = 0;
         }
 
-        // --- SISTEMA DE RENDERIZAÇÃO DA RAQUETE E MORTES ---
+        // --- RENDERIZAÇÃO DA RAQUETE DRAMÁTICA (SLOW MOTION) ---
         if (this.warpAnimationActive) {
             this.ctx.shadowBlur = 20; this.ctx.shadowColor = '#00FFFF'; this.ctx.fillStyle = '#FFFFFF';
             let beamWidth = (35 - this.warpLaserTimer) * 12;
@@ -597,12 +600,11 @@ export class Game {
             this.ctx.shadowBlur = 0;
         } 
         else if (this.deathPauseActive && this.deathAnimType > 0) {
-            // LÓGICA DE DESENHO DAS ANIMAÇÕES DE MORTE (1 a 4)
             if (this.deathAnimType === 1) { 
-                // 1. EXPLOSÃO CLÁSSICA
+                // 1. EXPLOSÃO (Gravity 0.05 para levitar por muito tempo)
                 for (let i = this.deathParticles.length - 1; i >= 0; i--) {
                     let p = this.deathParticles[i];
-                    p.x += p.dx; p.y += p.dy; p.dy += 0.2; 
+                    p.x += p.dx; p.y += p.dy; p.dy += 0.05; 
                     p.life -= p.decay;
                     if (p.life <= 0) { this.deathParticles.splice(i, 1); } 
                     else {
@@ -613,9 +615,9 @@ export class Game {
                 this.ctx.globalAlpha = 1.0;
             } 
             else if (this.deathAnimType === 2) { 
-                // 2. FANTASMA (Fade + Aura)
-                this.paddle.alpha -= 0.015;
-                this.paddle.extraScale += 0.4;
+                // 2. FANTASMA (Decay 0.004 leva exatos 4 segundos)
+                this.paddle.alpha -= 0.004;
+                this.paddle.extraScale += 0.15; // Slow motion da alma saindo
                 if (this.paddle.alpha > 0) {
                     this.ctx.globalAlpha = Math.max(0, this.paddle.alpha);
                     this.ctx.fillStyle = '#ffffff';
@@ -633,26 +635,26 @@ export class Game {
                 this.ctx.globalAlpha = 1.0;
             } 
             else if (this.deathAnimType === 3) { 
-                // 3. DERRETIMENTO
+                // 3. DERRETIMENTO (Derrete 0.05px por frame = 4 segundos para descer)
                 if (this.paddle.height > 0) {
-                    this.paddle.height -= 0.15; 
-                    this.paddle.y += 0.15; 
+                    this.paddle.height -= 0.05; 
+                    this.paddle.y += 0.05; 
                     this.ctx.fillStyle = '#ffffff';
                     this.drawRoundedRect(this.paddle.x, this.paddle.y, this.paddle.width, Math.max(0, this.paddle.height), 6);
                     
-                    if (Math.random() > 0.4) {
+                    if (Math.random() > 0.7) { // Pinguinhos lentos
                         this.deathParticles.push({
                             x: this.paddle.x + Math.random() * this.paddle.width,
                             y: this.paddle.y + this.paddle.height,
-                            dx: 0, dy: Math.random() * 2 + 1,
+                            dx: 0, dy: Math.random() * 1 + 0.5,
                             size: Math.random() * 3 + 1,
-                            life: 1.0, decay: 0.03, color: '#ffffff'
+                            life: 1.0, decay: 0.005, color: '#ffffff'
                         });
                     }
                 }
                 for (let i = this.deathParticles.length - 1; i >= 0; i--) {
                     let p = this.deathParticles[i];
-                    p.y += p.dy; p.dy += 0.1; p.life -= p.decay;
+                    p.y += p.dy; p.dy += 0.02; p.life -= p.decay;
                     if (p.life <= 0) this.deathParticles.splice(i, 1);
                     else {
                         this.ctx.globalAlpha = Math.max(0, p.life); this.ctx.fillStyle = p.color;
@@ -662,20 +664,20 @@ export class Game {
                 this.ctx.globalAlpha = 1.0;
             } 
             else if (this.deathAnimType === 4) { 
-                // 4. VENTO SOLAR
-                this.paddle.alpha -= 0.008;
+                // 4. VENTO SOLAR (Fade lento de 4 segundos)
+                this.paddle.alpha -= 0.004;
                 if (this.paddle.alpha > 0) {
                     this.ctx.globalAlpha = Math.max(0, this.paddle.alpha);
                     this.ctx.fillStyle = '#ffffff';
                     this.drawRoundedRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 6);
                     
-                    for(let i=0; i<3; i++) {
+                    if (Math.random() > 0.5) {
                         this.deathParticles.push({
                             x: this.paddle.x + Math.random() * this.paddle.width,
                             y: this.paddle.y + Math.random() * this.paddle.height,
-                            dx: Math.random() * 4 + 2, 
-                            dy: (Math.random() - 0.5) * 1.5,
-                            size: 2, life: 1.0, decay: 0.02, color: '#ffffff'
+                            dx: Math.random() * 2 + 1, // Vento suave lateral
+                            dy: (Math.random() - 0.5) * 1.0,
+                            size: 2, life: 1.0, decay: 0.005, color: '#ffffff'
                         });
                     }
                 }
