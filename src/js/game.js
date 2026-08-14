@@ -205,7 +205,8 @@ export class Game {
                     let hits = 1; let color = '#FFFFFF'; let points = 10; let indestructible = false;
                     
                     if (val === 6) { color = '#FF00FF'; points = 50; isMoving = true; hits = 2; }
-                    else if (val === 7) { color = '#00FF00'; points = 150; indestructible = true; isBumper = true; }
+                    // BUMPER agora nasce BRANCO (#FFFFFF)
+                    else if (val === 7) { color = '#FFFFFF'; points = 150; indestructible = true; isBumper = true; }
                     else {
                         let type = BRICK_TYPES[r % BRICK_TYPES.length];
                         color = type.color; points = type.points;
@@ -363,7 +364,7 @@ export class Game {
                     this.resetBall('respawn'); 
                 }
             }
-            isPausedForIntro = true; // Impede físicas e movimentos normais durante o death timer
+            isPausedForIntro = true; // Impede físicas normais no death timer
         } 
         else if (this.levelIntroActive) {
             this.levelIntroTimer--;
@@ -440,23 +441,20 @@ export class Game {
                 if (ball.y + ball.radius > this.canvas.height) {
                     this.balls.splice(bIndex, 1);
                     
-                    // --- O MOMENTO DA MORTE ---
                     if (this.balls.length === 0 && !this.deathPauseActive) {
                         this.bonuses = []; 
                         playMp3('src/assets/scream1.mp3'); 
                         this.lives--;
                         
                         this.deathPauseActive = true;
-                        this.deathPauseTimer = 300; // 5 Segundos (4 de animação dramática + 1 de silêncio/pausa vazia)
+                        this.deathPauseTimer = 300;
 
-                        // Sorteia a Animação Dramática (1, 2, 3 ou 4) com 25% de chance
                         this.deathAnimType = Math.floor(Math.random() * 4) + 1;
                         this.deathParticles = [];
                         this.paddle.alpha = 1.0;
                         this.paddle.extraScale = 0;
 
                         if (this.deathAnimType === 1) { 
-                            // 1. EXPLOSÃO (Velocidade e decaimento divididos por 4 para efeito Slow Motion)
                             for (let i = 0; i < 40; i++) {
                                 this.deathParticles.push({
                                     x: this.paddle.x + Math.random() * this.paddle.width,
@@ -488,7 +486,11 @@ export class Game {
 
                                 let overlap = (ball.radius + radius) - dist + 1;
                                 ball.x += nx * overlap; ball.y += ny * overlap;
+                                
                                 playSound('bumper');
+                                
+                                // Feedback visual: O Bumper pisca/fica cinza ao ser atingido!
+                                b.color = '#888888'; 
                             }
                         } else {
                             if (isColliding(ball, { x: b.x, y: b.y, w: b.w, h: b.h })) {
@@ -592,7 +594,6 @@ export class Game {
             this.ctx.stroke(); this.ctx.shadowBlur = 0;
         }
 
-        // --- RENDERIZAÇÃO DA RAQUETE DRAMÁTICA (SLOW MOTION) ---
         if (this.warpAnimationActive) {
             this.ctx.shadowBlur = 20; this.ctx.shadowColor = '#00FFFF'; this.ctx.fillStyle = '#FFFFFF';
             let beamWidth = (35 - this.warpLaserTimer) * 12;
@@ -601,7 +602,6 @@ export class Game {
         } 
         else if (this.deathPauseActive && this.deathAnimType > 0) {
             if (this.deathAnimType === 1) { 
-                // 1. EXPLOSÃO (Gravity 0.05 para levitar por muito tempo)
                 for (let i = this.deathParticles.length - 1; i >= 0; i--) {
                     let p = this.deathParticles[i];
                     p.x += p.dx; p.y += p.dy; p.dy += 0.05; 
@@ -615,9 +615,8 @@ export class Game {
                 this.ctx.globalAlpha = 1.0;
             } 
             else if (this.deathAnimType === 2) { 
-                // 2. FANTASMA (Decay 0.004 leva exatos 4 segundos)
                 this.paddle.alpha -= 0.004;
-                this.paddle.extraScale += 0.15; // Slow motion da alma saindo
+                this.paddle.extraScale += 0.15; 
                 if (this.paddle.alpha > 0) {
                     this.ctx.globalAlpha = Math.max(0, this.paddle.alpha);
                     this.ctx.fillStyle = '#ffffff';
@@ -635,14 +634,13 @@ export class Game {
                 this.ctx.globalAlpha = 1.0;
             } 
             else if (this.deathAnimType === 3) { 
-                // 3. DERRETIMENTO (Derrete 0.05px por frame = 4 segundos para descer)
                 if (this.paddle.height > 0) {
                     this.paddle.height -= 0.05; 
                     this.paddle.y += 0.05; 
                     this.ctx.fillStyle = '#ffffff';
                     this.drawRoundedRect(this.paddle.x, this.paddle.y, this.paddle.width, Math.max(0, this.paddle.height), 6);
                     
-                    if (Math.random() > 0.7) { // Pinguinhos lentos
+                    if (Math.random() > 0.7) { 
                         this.deathParticles.push({
                             x: this.paddle.x + Math.random() * this.paddle.width,
                             y: this.paddle.y + this.paddle.height,
@@ -664,7 +662,6 @@ export class Game {
                 this.ctx.globalAlpha = 1.0;
             } 
             else if (this.deathAnimType === 4) { 
-                // 4. VENTO SOLAR (Fade lento de 4 segundos)
                 this.paddle.alpha -= 0.004;
                 if (this.paddle.alpha > 0) {
                     this.ctx.globalAlpha = Math.max(0, this.paddle.alpha);
@@ -675,7 +672,7 @@ export class Game {
                         this.deathParticles.push({
                             x: this.paddle.x + Math.random() * this.paddle.width,
                             y: this.paddle.y + Math.random() * this.paddle.height,
-                            dx: Math.random() * 2 + 1, // Vento suave lateral
+                            dx: Math.random() * 2 + 1, 
                             dy: (Math.random() - 0.5) * 1.0,
                             size: 2, life: 1.0, decay: 0.005, color: '#ffffff'
                         });
@@ -694,12 +691,10 @@ export class Game {
             }
         } 
         else {
-            // RENDENRIZAÇÃO NORMAL DA RAQUETE
             this.ctx.fillStyle = '#ffffff';
             this.drawRoundedRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 6);
         }
 
-        // Renderiza bolas, tijolos, cápsulas e overlays
         this.ctx.fillStyle = '#ffffff';
         this.balls.forEach(ball => {
             this.ctx.beginPath(); this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); this.ctx.fill();
@@ -708,14 +703,20 @@ export class Game {
         this.bricks.forEach(b => {
             if (b.status === 1) { 
                 if (b.isBumper) {
-                    this.ctx.fillStyle = b.color;
+                    // DESENHO NOVO BUMPER: Círculo Externo
+                    this.ctx.fillStyle = b.color; // Nasce Branco, vira Cinza
                     this.ctx.beginPath();
                     this.ctx.arc(b.x + b.w/2, b.y + b.h/2, b.w/2, 0, Math.PI * 2);
                     this.ctx.fill();
-                    this.ctx.strokeStyle = '#FFFFFF';
-                    this.ctx.stroke();
+                    
+                    // DESENHO NOVO BUMPER: Núcleo Interno Maior (Preto)
+                    this.ctx.fillStyle = '#000000';
+                    this.ctx.beginPath();
+                    this.ctx.arc(b.x + b.w/2, b.y + b.h/2, (b.w/2) * 0.70, 0, Math.PI * 2);
+                    this.ctx.fill();
                 } else {
-                    this.ctx.fillStyle = b.color; this.drawRoundedRect(b.x, b.y, b.w, b.h, 4); 
+                    this.ctx.fillStyle = b.color; 
+                    this.drawRoundedRect(b.x, b.y, b.w, b.h, 4); 
                 }
             }
         });
