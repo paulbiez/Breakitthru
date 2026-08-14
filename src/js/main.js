@@ -83,20 +83,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnHudSfx) btnHudSfx.style.opacity = state.isSfxMuted ? "0.4" : "1.0";
     }
 
-    // --- CONTROLES DE SOM ---
+    // --- CONTROLES DE SOM (Ouvindo input e change) ---
     const bgmSlider = document.getElementById('bgmVolumeSlider');
     if (bgmSlider) {
-        bgmSlider.addEventListener('input', (e) => {
-            setBgmVolume(e.target.value / 100);
-            updateSoundUI();
+        ['input', 'change'].forEach(evt => {
+            bgmSlider.addEventListener(evt, (e) => {
+                setBgmVolume(e.target.value / 100);
+                updateSoundUI();
+            });
         });
     }
 
     const sfxSlider = document.getElementById('sfxVolumeSlider');
     if (sfxSlider) {
-        sfxSlider.addEventListener('input', (e) => {
-            setSfxVolume(e.target.value / 100);
-            updateSoundUI();
+        ['input', 'change'].forEach(evt => {
+            sfxSlider.addEventListener(evt, (e) => {
+                setSfxVolume(e.target.value / 100);
+                updateSoundUI();
+            });
         });
     }
 
@@ -145,9 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     if (paddleSlider) {
-        paddleSlider.addEventListener('input', (e) => {
-            game.setPaddleLevel(e.target.value);
-            updatePaddlePreview(e.target.value);
+        ['input', 'change'].forEach(evt => {
+            paddleSlider.addEventListener(evt, (e) => {
+                game.setPaddleLevel(e.target.value);
+                updatePaddlePreview(e.target.value);
+            });
         });
     }
 
@@ -166,9 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     if (sizeSlider) {
-        sizeSlider.addEventListener('input', (e) => {
-            game.setBallSizeLevel(e.target.value);
-            updateBallSizePreview(e.target.value);
+        ['input', 'change'].forEach(evt => {
+            sizeSlider.addEventListener(evt, (e) => {
+                game.setBallSizeLevel(e.target.value);
+                updateBallSizePreview(e.target.value);
+            });
         });
     }
 
@@ -184,9 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (text) text.innerText = currentSpeedVal;
     }
     if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-            game.setBallSpeedLevel(e.target.value);
-            updateSpeedPreview(e.target.value);
+        ['input', 'change'].forEach(evt => {
+            speedSlider.addEventListener(evt, (e) => {
+                game.setBallSpeedLevel(e.target.value);
+                updateSpeedPreview(e.target.value);
+            });
         });
     }
 
@@ -211,6 +221,11 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(speedAnimLoop);
     }
     requestAnimationFrame(speedAnimLoop);
+
+    // Inicialização imediata dos previews
+    updatePaddlePreview(game.paddleLevel);
+    updateSpeedPreview(game.ballSpeedLevel);
+    updateBallSizePreview(game.ballSizeLevel);
 
     // --- NAVEGAÇÃO DOS MENUS ---
     const btnSettings = document.getElementById('btnSettings');
