@@ -59,7 +59,7 @@ export async function playBgm() {
         }
         bgmSourceNode = audioCtx.createBufferSource();
         bgmSourceNode.buffer = buffer;
-        bgmSourceNode.loop = true; // Loop perfeito e gapless via Web Audio API
+        bgmSourceNode.loop = true;
         bgmSourceNode.connect(bgmGainNode);
         
         bgmGainNode.gain.value = isBgmMuted ? 0 : bgmVolume;

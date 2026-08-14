@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const game = new Game(canvas);
     let wasRunningBeforeRotation = false;
-    let settingsBackup = null;
 
     let validLevel = parseInt(game.currentLevel, 10);
     if (isNaN(validLevel) || validLevel < 1) {
@@ -84,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnHudSfx) btnHudSfx.style.opacity = state.isSfxMuted ? "0.4" : "1.0";
     }
 
+    // --- CONTROLES DE SOM ---
     const bgmSlider = document.getElementById('bgmVolumeSlider');
     if (bgmSlider) {
         bgmSlider.addEventListener('input', (e) => {
@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- BOTÕES HUD IN-GAME ---
     const btnPause = document.getElementById('btnPause');
     if (btnPause) {
         btnPause.addEventListener('click', () => {
@@ -127,6 +128,107 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- SUBMENUS DE CONFIGURAÇÃO (SLIDERS & PREVIEWS) ---
+    
+    // 1. Tamanho da Raquete (1 a 10)
+    const paddleSlider = document.getElementById('paddleSlider');
+    function updatePaddlePreview(val) {
+        const lvl = parseInt(val, 10);
+        const text = document.getElementById('paddleValText');
+        const preview = document.getElementById('paddlePreview');
+        if (text) text.innerText = lvl;
+        if (preview) {
+            const minW = 35;
+            const maxW = 85.05;
+            const calculatedW = minW + ((lvl - 1) / 9) * (maxW - minW);
+            preview.style.width = calculatedW + 'px';
+        }
+    }
+    if (paddleSlider) {
+        paddleSlider.addEventListener('input', (e) => {
+            game.setPaddleLevel(e.target.value);
+            updatePaddlePreview(e.target.value);
+        });
+    }
+
+    // 2. Tamanho da Bola (1 a 5)
+    const sizeSlider = document.getElementById('sizeSlider');
+    function updateBallSizePreview(val) {
+        const lvl = parseInt(val, 10);
+        const text = document.getElementById('sizeValText');
+        const preview = document.getElementById('ballSizePreview');
+        if (text) text.innerText = lvl;
+        if (preview) {
+            const diameters = [8, 10, 12, 14, 16];
+            const d = diameters[lvl - 1] || 12;
+            preview.style.width = (d * 1.5) + 'px';
+            preview.style.height = (d * 1.5) + 'px';
+        }
+    }
+    if (sizeSlider) {
+        sizeSlider.addEventListener('input', (e) => {
+            game.setBallSizeLevel(e.target.value);
+            updateBallSizePreview(e.target.value);
+        });
+    }
+
+    // 3. Velocidade da Bola (1 a 5) com Animação
+    let currentSpeedVal = 3;
+    let animPos = 0;
+    let animDir = 1;
+
+    const speedSlider = document.getElementById('speedSlider');
+    function updateSpeedPreview(val) {
+        currentSpeedVal = parseInt(val, 10);
+        const text = document.getElementById('speedValText');
+        if (text) text.innerText = currentSpeedVal;
+    }
+    if (speedSlider) {
+        speedSlider.addEventListener('input', (e) => {
+            game.setBallSpeedLevel(e.target.value);
+            updateSpeedPreview(e.target.value);
+        });
+    }
+
+    function speedAnimLoop() {
+        const track = document.getElementById('speedBallTrack');
+        const ball = document.getElementById('speedBallAnim');
+        if (track && ball) {
+            const maxTrackWidth = track.clientWidth - 12;
+            const speedMultipliers = [0.8, 1.4, 2.2, 3.2, 4.5];
+            const speed = speedMultipliers[currentSpeedVal - 1] || 2.2;
+
+            animPos += speed * animDir;
+            if (animPos >= maxTrackWidth) {
+                animPos = maxTrackWidth;
+                animDir = -1;
+            } else if (animPos <= 0) {
+                animPos = 0;
+                animDir = 1;
+            }
+            ball.style.left = animPos + 'px';
+        }
+        requestAnimationFrame(speedAnimLoop);
+    }
+    requestAnimationFrame(speedAnimLoop);
+
+    // --- NAVEGAÇÃO DOS MENUS ---
+    const btnSettings = document.getElementById('btnSettings');
+    if (btnSettings) {
+        btnSettings.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('settingsMenu').style.display = 'flex';
+        });
+    }
+
+    const btnSettingsSave = document.getElementById('btnSettingsSave');
+    if (btnSettingsSave) {
+        btnSettingsSave.addEventListener('click', () => {
+            hideAllMenus();
+            document.getElementById('menu').style.display = 'flex';
+        });
+    }
+
     const btnSettingsSound = document.getElementById('btnSettingsSound');
     if (btnSettingsSound) {
         btnSettingsSound.addEventListener('click', () => {
@@ -144,63 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function updatePreviewPaddle(sizeOption) {
-        let preview = document.getElementById('previewPaddle');
-        if (!preview) return;
-        let scale = 1.35;
-        if (sizeOption === 'small') scale = 0.7;
-        if (sizeOption === 'medium') scale = 1.0;
-        if (sizeOption === 'large') scale = 1.35;
-        preview.style.width = (63 * scale) + 'px';
-    }
-
-    function updatePreviewBall(sizeOption) {
-        let preview = document.getElementById('previewBall');
-        if (!preview) return;
-        let radius = 6;
-        if (sizeOption === 'small') radius = 4.5;
-        if (sizeOption === 'normal') radius = 6;
-        if (sizeOption === 'large') radius = 8;
-        let diameter = (radius * 2) * 2;
-        preview.style.width = diameter + 'px';
-        preview.style.height = diameter + 'px';
-    }
-
-    function highlightActiveOptions(className, activeVal, attrName) {
-        document.querySelectorAll('.' + className).forEach(b => {
-            if (b.getAttribute(attrName) === activeVal) {
-                b.classList.add('active-option');
-            } else {
-                b.classList.remove('active-option');
-            }
-        });
-    }
-
-    const btnSettings = document.getElementById('btnSettings');
-    if (btnSettings) {
-        btnSettings.addEventListener('click', () => {
-            settingsBackup = game.backupSettings();
+    const btnSettingsPaddle = document.getElementById('btnSettingsPaddle');
+    if (btnSettingsPaddle) {
+        btnSettingsPaddle.addEventListener('click', () => {
             hideAllMenus();
-            document.getElementById('settingsMenu').style.display = 'flex';
-        });
-    }
-
-    const saveBtn = document.getElementById('btnSettingsSave');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            settingsBackup = null;
-            hideAllMenus();
-            document.getElementById('menu').style.display = 'flex';
-        });
-    }
-
-    const btnPaddle = document.getElementById('btnSettingsPaddle');
-    if (btnPaddle) {
-        btnPaddle.addEventListener('click', () => {
-            hideAllMenus();
+            if (paddleSlider) paddleSlider.value = game.paddleLevel;
+            updatePaddlePreview(game.paddleLevel);
             document.getElementById('settingsPaddleMenu').style.display = 'flex';
-            updatePreviewPaddle(game.paddleSizeOption);
-            highlightActiveOptions('btn-paddle-size', game.paddleSizeOption, 'data-size');
         });
     }
 
@@ -212,21 +264,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.querySelectorAll('.btn-paddle-size').forEach(btn => {
-        btn.addEventListener('click', () => {
-            let size = btn.getAttribute('data-size');
-            game.setPaddleSize(size);
-            updatePreviewPaddle(size);
-            highlightActiveOptions('btn-paddle-size', size, 'data-size');
-        });
-    });
-
-    const btnSpeed = document.getElementById('btnSettingsBallSpeed');
-    if (btnSpeed) {
-        btnSpeed.addEventListener('click', () => {
+    const btnSettingsSpeed = document.getElementById('btnSettingsBallSpeed');
+    if (btnSettingsSpeed) {
+        btnSettingsSpeed.addEventListener('click', () => {
             hideAllMenus();
+            if (speedSlider) speedSlider.value = game.ballSpeedLevel;
+            updateSpeedPreview(game.ballSpeedLevel);
             document.getElementById('settingsBallSpeedMenu').style.display = 'flex';
-            highlightActiveOptions('btn-ball-speed', game.ballSpeedOption, 'data-speed');
         });
     }
 
@@ -238,21 +282,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.querySelectorAll('.btn-ball-speed').forEach(btn => {
-        btn.addEventListener('click', () => {
-            let speed = btn.getAttribute('data-speed');
-            game.setBallSpeed(speed);
-            highlightActiveOptions('btn-ball-speed', speed, 'data-speed');
-        });
-    });
-
-    const btnBallSize = document.getElementById('btnSettingsBallSize');
-    if (btnBallSize) {
-        btnBallSize.addEventListener('click', () => {
+    const btnSettingsBallSize = document.getElementById('btnSettingsBallSize');
+    if (btnSettingsBallSize) {
+        btnSettingsBallSize.addEventListener('click', () => {
             hideAllMenus();
+            if (sizeSlider) sizeSlider.value = game.ballSizeLevel;
+            updateBallSizePreview(game.ballSizeLevel);
             document.getElementById('settingsBallSizeMenu').style.display = 'flex';
-            updatePreviewBall(game.ballSizeOption);
-            highlightActiveOptions('btn-ball-size', game.ballSizeOption, 'data-size');
         });
     }
 
@@ -261,24 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSizeBack.addEventListener('click', () => {
             hideAllMenus();
             document.getElementById('settingsMenu').style.display = 'flex';
-        });
-    }
-
-    document.querySelectorAll('.btn-ball-size').forEach(btn => {
-        btn.addEventListener('click', () => {
-            let size = btn.getAttribute('data-size');
-            game.setBallSize(size);
-            updatePreviewBall(size);
-            highlightActiveOptions('btn-ball-size', size, 'data-size');
-        });
-    });
-
-    const quitBtn = document.getElementById('quitBtn');
-    if (quitBtn) {
-        quitBtn.addEventListener('click', () => {
-            game.gameRunning = false;
-            pauseBgm();
-            document.getElementById('pauseMenu').style.display = 'flex';
         });
     }
 

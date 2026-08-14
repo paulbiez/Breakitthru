@@ -1,7 +1,7 @@
 // src/js/game.js
 import { isColliding, resolveBrickCollision, resolvePaddleCollision } from './physics.js';
 import { playSound, initAudio, playMp3, playBgm, pauseBgm, stopBgm } from './audio.js';
-import { TOTAL_LEVELS, BRICK_TYPES, DIFFICULTY_CONFIGS, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
+import { TOTAL_LEVELS, BRICK_TYPES, LEVEL_TEXT_COLORS, LEVEL_BACKGROUNDS } from './config.js';
 import { getLevelPattern } from './levels.js';
 
 export class Game {
@@ -20,16 +20,15 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        // Base da raquete reduzida em 30% (de 90 para 63)
-        this.baseWidth = 63;
+        // Configurações numéricas dos Sliders
+        this.paddleLevel = 10; // 1 a 10 (10 = 85.05px)
+        this.ballSpeedLevel = 3; // 1 a 5
+        this.ballSizeLevel = 3;  // 1 a 5
+
         this.paddle = { x: 157.5, y: 520, width: 85.05, height: 12, glue: false };
         this.balls = [];
         this.bricks = [];
         this.bonuses = [];
-
-        this.paddleSizeOption = 'large'; 
-        this.ballSpeedOption = 'fast';   
-        this.ballSizeOption = 'normal';  
 
         this.gameRunning = false;
         this.victoryExplosionActive = false;
@@ -55,50 +54,43 @@ export class Game {
         this.padding = 5;
 
         this.initLevel(this.currentLevel);
-        this.applyPaddleSizeOption();
-        this.applyBallSizeOption();
+        this.applyPaddleSettings();
     }
 
-    calculateSecretDifficulty() {
-        let paddleDiff = (this.paddleSizeOption === 'small') ? 'hard' : (this.paddleSizeOption === 'large' ? 'easy' : 'medium');
-        let speedDiff = (this.ballSpeedOption === 'slow') ? 'easy' : (this.ballSpeedOption === 'fast' ? 'hard' : 'medium');
-        let sizeDiff = (this.ballSizeOption === 'small') ? 'hard' : (this.ballSizeOption === 'large' ? 'easy' : 'medium');
-
-        let counts = { easy: 0, medium: 0, hard: 0 };
-        counts[paddleDiff]++; counts[speedDiff]++; counts[sizeDiff]++;
-
-        if (counts.easy >= 2) return 'easy';
-        if (counts.hard >= 2) return 'hard';
-        return 'medium';
+    setPaddleLevel(lvl) {
+        this.paddleLevel = parseInt(lvl, 10);
+        this.applyPaddleSettings();
     }
 
-    setPaddleSize(option) { this.paddleSizeOption = option; this.applyPaddleSizeOption(); }
-    setBallSpeed(option) { this.ballSpeedOption = option; }
-    setBallSize(option) { this.ballSizeOption = option; this.applyBallSizeOption(); }
+    setBallSpeedLevel(lvl) {
+        this.ballSpeedLevel = parseInt(lvl, 10);
+    }
 
-    applyPaddleSizeOption() {
-        let scale = 1.35;
-        if (this.paddleSizeOption === 'small') scale = 0.7;
-        if (this.paddleSizeOption === 'medium') scale = 1.0;
-        if (this.paddleSizeOption === 'large') scale = 1.35;
-        
-        // Aplicação da nova base (63px)
-        this.baseWidth = 63;
-        this.paddle.width = this.baseWidth * scale;
+    setBallSizeLevel(lvl) {
+        this.ballSizeLevel = parseInt(lvl, 10);
+        this.applyBallSettings();
+    }
+
+    applyPaddleSettings() {
+        const minW = 35;
+        const maxW = 85.05;
+        this.paddle.width = minW + ((this.paddleLevel - 1) / 9) * (maxW - minW);
+
         if (this.paddle.x < 0) this.paddle.x = 0;
-        if (this.paddle.x + this.paddle.width > this.canvas.width) this.paddle.x = this.canvas.width - this.paddle.width;
+        if (this.paddle.x + this.paddle.width > this.canvas.width) {
+            this.paddle.x = this.canvas.width - this.paddle.width;
+        }
     }
 
-    applyBallSizeOption() {
-        let radius = 6;
-        if (this.ballSizeOption === 'small') radius = 4.5;
-        if (this.ballSizeOption === 'normal') radius = 6;
-        if (this.ballSizeOption === 'large') radius = 8;
-        this.balls.forEach(ball => { ball.radius = radius; });
+    getBallRadius() {
+        const radii = [4.0, 5.0, 6.0, 7.0, 8.0];
+        return radii[this.ballSizeLevel - 1] || 6.0;
     }
 
-    backupSettings() { return { paddleSize: this.paddleSizeOption, ballSpeed: this.ballSpeedOption, ballSize: this.ballSizeOption }; }
-    restoreSettings(backup) { this.setPaddleSize(backup.paddleSize); this.setBallSpeed(backup.ballSpeed); this.setBallSize(backup.ballSize); }
+    applyBallSettings() {
+        const r = this.getBallRadius();
+        this.balls.forEach(ball => { ball.radius = r; });
+    }
 
     startGame() {
         initAudio();
@@ -139,21 +131,11 @@ export class Game {
         this.resetBall('respawn'); 
     }
 
-    getDeterministicCapsule() {
-        let currentDiff = this.calculateSecretDifficulty();
-        const weights = DIFFICULTY_CONFIGS[currentDiff].weights;
-        let totalWeight = weights.reduce((acc, c) => acc + c.weight, 0);
-        let seed = (Math.abs(this.score) % 10) + Math.floor(Math.abs(this.paddle.x));
-        let value = seed % totalWeight;
-        for (let c of weights) { if (value < c.weight) return c.type; value -= c.weight; }
-        return 'C';
-    }
-
     clearActiveBonuses() {
-        this.applyPaddleSizeOption();
+        this.applyPaddleSettings();
         this.paddle.glue = false;
         this.electricShieldActive = false;
-        this.applyBallSizeOption();
+        this.applyBallSettings();
         this.gigaBallTimer = 0;
     }
 
@@ -244,10 +226,8 @@ export class Game {
             }
         }
 
-        let currentDiff = this.calculateSecretDifficulty();
-        let rate = DIFFICULTY_CONFIGS[currentDiff].spawnRate;
         let activeDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible);
-        let capsuleCount = Math.floor(activeDestructibleBricks.length * rate);
+        let capsuleCount = Math.floor(activeDestructibleBricks.length * 0.25);
         let shuffled = [...activeDestructibleBricks].sort(() => Math.random() - 0.5);
         for (let i = 0; i < capsuleCount && i < shuffled.length; i++) {
             shuffled[i].hasCapsule = true;
@@ -258,11 +238,7 @@ export class Game {
         this.clearActiveBonuses();
         this.paddle.x = (this.canvas.width - this.paddle.width) / 2;
         
-        let radius = 6;
-        if (this.ballSizeOption === 'small') radius = 4.5;
-        if (this.ballSizeOption === 'normal') radius = 6;
-        if (this.ballSizeOption === 'large') radius = 8;
-
+        const radius = this.getBallRadius();
         this.balls = [{
             x: this.paddle.x + this.paddle.width / 2,
             y: this.paddle.y - radius - 2,
@@ -285,29 +261,28 @@ export class Game {
     }
 
     launchBalls() {
-        let initialDy = -5.0; let initialDxRange = 3;
-        if (this.ballSpeedOption === 'slow') { initialDy = -2.5; initialDxRange = 2; } 
-        else if (this.ballSpeedOption === 'normal') { initialDy = -3.5; initialDxRange = 2.5; }
+        const speeds = [-2.5, -3.5, -4.5, -5.5, -6.5];
+        const dxRanges = [2.0, 2.5, 3.0, 3.5, 4.0];
+        
+        const initialDy = speeds[this.ballSpeedLevel - 1] || -4.5;
+        const initialDxRange = dxRanges[this.ballSpeedLevel - 1] || 3.0;
 
         this.balls.forEach(ball => {
             if (ball.stuck) {
                 ball.stuck = false;
                 let randomDir = Math.random() > 0.5 ? 1 : -1;
-                ball.dx = randomDir * (initialDxRange + Math.random() * 2);
+                ball.dx = randomDir * (initialDxRange + Math.random() * 1.5);
                 ball.dy = initialDy;
             }
         });
     }
 
     spawnMultiBalls() {
-        let radius = 6;
-        if (this.ballSizeOption === 'small') radius = 4.5;
-        if (this.ballSizeOption === 'large') radius = 8;
-
+        const radius = this.getBallRadius();
         let newBalls = [];
         this.balls.forEach(b => {
             for (let i = 0; i < 2; i++) {
-                newBalls.push({ x: b.x, y: b.y, dx: (Math.random() - 0.5) * 6, dy: -Math.abs(b.dy || 5.0), radius: radius, stuck: false });
+                newBalls.push({ x: b.x, y: b.y, dx: (Math.random() - 0.5) * 6, dy: -Math.abs(b.dy || 4.5), radius: radius, stuck: false });
             }
         });
         this.balls = this.balls.concat(newBalls);
@@ -414,7 +389,7 @@ export class Game {
 
         if (this.gigaBallTimer > 0) {
             this.gigaBallTimer--;
-            if (this.gigaBallTimer <= 0) { this.applyBallSizeOption(); }
+            if (this.gigaBallTimer <= 0) { this.applyBallSettings(); }
         }
 
         this.bricks.forEach(b => {
@@ -490,7 +465,8 @@ export class Game {
                                     if (b.hits <= 0) {
                                         b.status = 0; this.score += b.points;
                                         if (b.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
-                                            let capType = this.getDeterministicCapsule();
+                                            const capsules = ['C', 'E', 'S', 'H', 'G', 'D', 'P', 'B'];
+                                            let capType = capsules[Math.floor(Math.random() * capsules.length)];
                                             this.bonuses.push({ x: b.x + b.w / 2 - 12, y: b.y, type: capType, speed: 2 });
                                             this.isCapsuleOnScreen = true;
                                         }
@@ -524,12 +500,7 @@ export class Game {
                 } else if (b.type === 'S') { this.balls.forEach(ball => { ball.dx *= 0.65; ball.dy *= 0.65; }); } 
                 else if (b.type === 'H') { this.electricShieldActive = true; } 
                 else if (b.type === 'G') {
-                    this.balls.forEach(ball => {
-                        let r = 12;
-                        if (this.ballSizeOption === 'small') r = 9;
-                        if (this.ballSizeOption === 'large') r = 15;
-                        ball.radius = r;
-                    });
+                    this.balls.forEach(ball => { ball.radius = 14; });
                     this.gigaBallTimer = 15 * 60;
                 } else if (b.type === 'D') { this.spawnMultiBalls(); } 
                 else if (b.type === 'P') { this.lives++; } 
