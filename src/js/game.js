@@ -20,10 +20,9 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        // Configurações dos Sliders
-        this.paddleLevel = 10;   // 1 a 10 (10 = 85.05px)
-        this.ballSpeedLevel = 3; // 1 a 5
-        this.ballSizeLevel = 3;  // 1 a 5
+        this.paddleLevel = 10;   
+        this.ballSpeedLevel = 3; 
+        this.ballSizeLevel = 3;  
 
         this.paddle = { x: 157.5, y: 520, width: 85.05, height: 12, glue: false, alpha: 1.0, extraScale: 0 };
         this.balls = [];
@@ -224,7 +223,7 @@ export class Game {
                         status: 1, hits: hits, maxHits: hits, color: color, points: points, 
                         indestructible: indestructible, hasCapsule: false,
                         isMoving: isMoving, isBumper: isBumper,
-                        flashTimer: 0 // NOVO: Timer para o piscar cinza
+                        flashTimer: 0 
                     });
                 }
             }
@@ -395,6 +394,14 @@ export class Game {
         }
 
         if (isPausedForIntro) {
+            // --- MUDANÇA AQUI: Garante que a bola colada siga a raquete na pausa ---
+            this.balls.forEach(ball => {
+                if (ball.stuck) {
+                    ball.x = this.paddle.x + this.paddle.width / 2;
+                    ball.y = this.paddle.y - ball.radius - 2;
+                }
+            });
+            // -----------------------------------------------------------------------
             this.draw();
             return; 
         }
@@ -404,7 +411,6 @@ export class Game {
             if (this.gigaBallTimer <= 0) { this.applyBallSettings(); }
         }
 
-        // LÓGICA DE ESTADOS DOS TIJOLOS E BUMPERS
         this.bricks.forEach(b => {
             if (b.status === 1) {
                 if (b.isMoving) {
@@ -480,8 +486,7 @@ export class Game {
                     if (b.status === 1) {
                         if (b.isBumper) {
                             let cx = b.x + b.w / 2; let cy = b.y + b.h / 2; 
-                            // NOVO: Bumper 30% maior na física para refletir o visual
-                            let bumperRadius = (b.w / 2) * 1.3; 
+                            let bumperRadius = (b.w / 2) * 1.45; 
                             let dx = ball.x - cx; let dy = ball.y - cy;
                             let dist = Math.sqrt(dx*dx + dy*dy);
                             
@@ -496,8 +501,7 @@ export class Game {
                                 ball.x += nx * overlap; ball.y += ny * overlap;
                                 
                                 playSound('bumper');
-                                // NOVO: Timer visual para o Bumper ficar cinza
-                                b.flashTimer = 12; 
+                                b.flashTimer = 20; 
                             }
                         } else {
                             if (isColliding(ball, { x: b.x, y: b.y, w: b.w, h: b.h })) {
@@ -710,16 +714,13 @@ export class Game {
         this.bricks.forEach(b => {
             if (b.status === 1) { 
                 if (b.isBumper) {
-                    // DESENHO NOVO BUMPER: Visual 30% maior
-                    let bumperRadius = (b.w / 2) * 1.3;
+                    let bumperRadius = (b.w / 2) * 1.45;
                     
-                    // Círculo Externo (Se o timer for > 0, desenha Cinza. Senão, Branco)
                     this.ctx.fillStyle = (b.flashTimer > 0) ? '#888888' : b.color;
                     this.ctx.beginPath();
                     this.ctx.arc(b.x + b.w/2, b.y + b.h/2, bumperRadius, 0, Math.PI * 2);
                     this.ctx.fill();
                     
-                    // Círculo Interno Maior (Preto - 70% da área)
                     this.ctx.fillStyle = '#000000';
                     this.ctx.beginPath();
                     this.ctx.arc(b.x + b.w/2, b.y + b.h/2, bumperRadius * 0.70, 0, Math.PI * 2);

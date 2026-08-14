@@ -39,17 +39,22 @@ document.addEventListener('DOMContentLoaded', () => {
         selectBtn.innerText = `Selecionar Fase: ${validLevel}`;
     }
 
-    // Instancia o Grid Picker (1 a 20)
     const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
         let selected = parseInt(level, 10) || 1;
         game.currentLevel = selected;
         if (selectBtn) selectBtn.innerText = `Selecionar Fase: ${selected}`;
     });
 
+    // --- MUDANÇA AQUI: Libera a raquete no Prepare-se e impede lançamento antecipado ---
     initInputs(canvas, game.paddle, 
-        { onLaunch: () => game.launchBalls() }, 
-        () => game.levelIntroActive || game.prepareActive || game.deathPauseActive
+        { onLaunch: () => {
+            if (!game.levelIntroActive && !game.prepareActive && !game.deathPauseActive) {
+                game.launchBalls();
+            }
+        }}, 
+        () => game.deathPauseActive || game.warpAnimationActive || game.victoryExplosionActive
     );
+    // ----------------------------------------------------------------------------------
 
     window.addEventListener("orientationchange", () => {
         setTimeout(() => {
@@ -109,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSoundUI();
             });
         });
-        bgmSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
+        bgmSlider.addEventListener('change', () => playSound('wall'));
     }
 
     const sfxSlider = document.getElementById('sfxVolumeSlider');
@@ -120,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSoundUI();
             });
         });
-        sfxSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
+        sfxSlider.addEventListener('change', () => playSound('wall'));
     }
 
     // --- BOTÕES HUD ---
@@ -151,9 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- SUBMENUS DE CONFIGURAÇÃO (SLIDERS & PREVIEWS) ---
-    
-    // 1. Tamanho da Raquete (1 a 10)
+    // --- SUBMENUS DE CONFIGURAÇÃO ---
     const paddleSlider = document.getElementById('paddleSlider');
     function updatePaddlePreview(val) {
         const lvl = parseInt(val, 10);
@@ -174,10 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatePaddlePreview(e.target.value);
             });
         });
-        paddleSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
+        paddleSlider.addEventListener('change', () => playSound('wall'));
     }
 
-    // 2. Tamanho da Bola (1 a 5)
     const sizeSlider = document.getElementById('sizeSlider');
     function updateBallSizePreview(val) {
         const lvl = parseInt(val, 10);
@@ -198,10 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateBallSizePreview(e.target.value);
             });
         });
-        sizeSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
+        sizeSlider.addEventListener('change', () => playSound('wall'));
     }
 
-    // 3. Velocidade da Bola (1 a 5) com Animação
     let currentSpeedVal = 3;
     let animPos = 0;
     let animDir = 1;
@@ -219,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSpeedPreview(e.target.value);
             });
         });
-        speedSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
+        speedSlider.addEventListener('change', () => playSound('wall'));
     }
 
     function speedAnimLoop() {
@@ -244,12 +245,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     requestAnimationFrame(speedAnimLoop);
 
-    // Inicialização dos previews com valores atuais
     updatePaddlePreview(game.paddleLevel);
     updateSpeedPreview(game.ballSpeedLevel);
     updateBallSizePreview(game.ballSizeLevel);
 
-    // --- NAVEGAÇÃO DOS MENUS ---
     const btnSettings = document.getElementById('btnSettings');
     if (btnSettings) {
         btnSettings.addEventListener('click', () => {
