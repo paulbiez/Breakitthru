@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Breakout Game</title>
-<link rel="stylesheet" href="./style.css?v=7">
+<link rel="stylesheet" href="./style.css?v=8">
 </head>
 <body>
 
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- HUD Flutuante -->
+    <!-- HUD Flutuante no Canto Superior Direito -->
     <div id="hudControls">
         <button id="btnPause" class="hud-btn" title="Pausar">⏸️</button>
         <button id="btnHudBgm" class="hud-btn" title="Música">🎵</button>
@@ -50,31 +50,44 @@
         <button id="btnSoundBack" class="menu-btn">Voltar</button>
     </div>
 
-    <!-- Submenu Raquete -->
+    <!-- Submenu 1: Tamanho da Raquete (1 a 10) -->
     <div id="settingsPaddleMenu" class="menu-overlay" style="display: none;">
         <h2>Tamanho da Raquete</h2>
-        <button class="menu-btn btn-paddle-size" data-size="small">Pequena</button>
-        <button class="menu-btn btn-paddle-size" data-size="medium">Média</button>
-        <button class="menu-btn btn-paddle-size" data-size="large">Grande</button>
-        <div id="previewPaddle" style="height: 12px; background: #fff; border-radius: 6px; margin: 10px 0;"></div>
+        <div class="slider-value-display" id="paddleValText">10</div>
+        <div class="slider-box">
+            <input type="range" id="paddleSlider" class="sound-slider" min="1" max="10" value="10">
+        </div>
+        <div class="preview-card">
+            <div id="paddlePreview"></div>
+        </div>
         <button id="btnPaddleBack" class="menu-btn">Voltar</button>
     </div>
 
-    <!-- Submenu Velocidade da Bola -->
+    <!-- Submenu 2: Velocidade da Bola (1 a 5) -->
     <div id="settingsBallSpeedMenu" class="menu-overlay" style="display: none;">
         <h2>Velocidade da Bola</h2>
-        <button class="menu-btn btn-ball-speed" data-speed="slow">Lenta</button>
-        <button class="menu-btn btn-ball-speed" data-speed="fast">Rápida</button>
+        <div class="slider-value-display" id="speedValText">3</div>
+        <div class="slider-box">
+            <input type="range" id="speedSlider" class="sound-slider" min="1" max="5" value="3">
+        </div>
+        <div class="preview-card">
+            <div id="speedBallTrack">
+                <div id="speedBallAnim"></div>
+            </div>
+        </div>
         <button id="btnSpeedBack" class="menu-btn">Voltar</button>
     </div>
 
-    <!-- Submenu Tamanho da Bola -->
+    <!-- Submenu 3: Tamanho da Bola (1 a 5) -->
     <div id="settingsBallSizeMenu" class="menu-overlay" style="display: none;">
         <h2>Tamanho da Bola</h2>
-        <button class="menu-btn btn-ball-size" data-size="small">Pequena</button>
-        <button class="menu-btn btn-ball-size" data-size="normal">Normal</button>
-        <button class="menu-btn btn-ball-size" data-size="large">Grande</button>
-        <div id="previewBall" style="background: #fff; border-radius: 50%; margin: 10px 0;"></div>
+        <div class="slider-value-display" id="sizeValText">3</div>
+        <div class="slider-box">
+            <input type="range" id="sizeSlider" class="sound-slider" min="1" max="5" value="3">
+        </div>
+        <div class="preview-card">
+            <div id="ballSizePreview"></div>
+        </div>
         <button id="btnSizeBack" class="menu-btn">Voltar</button>
     </div>
 
@@ -99,7 +112,7 @@
         <button class="menu-btn btn-quit">Menu Principal</button>
     </div>
 
-    <!-- Modal Seletor com Grid Arcade -->
+    <!-- Modal Seletor de Fases (Grid Arcade) -->
     <div id="iosPickerOverlay">
         <div class="picker-card">
             <h2>Selecionar Fase</h2>
