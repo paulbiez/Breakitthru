@@ -546,6 +546,9 @@ export class Game {
                     continue;
                 }
 
+                // CORREÇÃO: Resolução inteligente de colisões simultâneas (Anti-Tunneling)
+                let hitBricks = [];
+
                 this.bricks.forEach(b => {
                     if (b.status === 1) {
                         if (b.isBumper) {
@@ -569,28 +572,50 @@ export class Game {
                             }
                         } else {
                             if (isColliding(ball, { x: b.x, y: b.y, w: b.w, h: b.h })) {
-                                resolveBrickCollision(ball, b, b.w, b.h);
-                                playSound('brick');
-
-                                if (!b.indestructible) {
-                                    b.hits--;
-                                    if (b.hits <= 0) {
-                                        b.status = 0; this.score += b.points;
-                                        if (b.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
-                                            const capsules = ['C', 'E', 'S', 'H', 'G', 'D', 'P', 'B'];
-                                            let capType = capsules[Math.floor(Math.random() * capsules.length)];
-                                            this.bonuses.push({ x: b.x + b.w / 2 - 12, y: b.y, type: capType, speed: 2 });
-                                            this.isCapsuleOnScreen = true;
-                                        }
-                                    } else {
-                                        if (b.hits === 2) b.color = '#DDDD00'; 
-                                        if (b.hits === 1) b.color = '#AAAA00'; 
-                                    }
-                                }
+                                hitBricks.push(b);
                             }
                         }
                     }
                 });
+
+                if (hitBricks.length > 0) {
+                    // Impede o loop infinito resolvendo a física APENAS com o bloco mais próximo
+                    let closestBrick = hitBricks[0];
+                    let minDist = Infinity;
+                    
+                    hitBricks.forEach(b => {
+                        let cx = b.x + b.w / 2;
+                        let cy = b.y + b.h / 2;
+                        let dist = Math.hypot(ball.x - cx, ball.y - cy);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closestBrick = b;
+                        }
+                    });
+
+                    // Modifica o vetor de velocidade uma única vez
+                    resolveBrickCollision(ball, closestBrick, closestBrick.w, closestBrick.h);
+                    playSound('brick');
+
+                    // Aplica efeitos e dano visual a TODOS os blocos tocados
+                    hitBricks.forEach(b => {
+                        if (!b.indestructible) {
+                            b.hits--;
+                            if (b.hits <= 0) {
+                                b.status = 0; this.score += b.points;
+                                if (b.hasCapsule && !this.isCapsuleOnScreen && this.balls.length === 1) {
+                                    const capsules = ['C', 'E', 'S', 'H', 'G', 'D', 'P', 'B'];
+                                    let capType = capsules[Math.floor(Math.random() * capsules.length)];
+                                    this.bonuses.push({ x: b.x + b.w / 2 - 12, y: b.y, type: capType, speed: 2 });
+                                    this.isCapsuleOnScreen = true;
+                                }
+                            } else {
+                                if (b.hits === 2) b.color = '#DDDD00'; 
+                                if (b.hits === 1) b.color = '#AAAA00'; 
+                            }
+                        }
+                    });
+                }
             }
         }
 
@@ -776,7 +801,6 @@ export class Game {
             this.ctx.beginPath(); this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); this.ctx.fill();
         });
 
-        // RENDERIZAÇÃO DOS TIJOLOS, BUMPERS E RACHADURAS
         this.bricks.forEach(b => {
             if (b.status === 1) { 
                 if (b.isBumper) {
@@ -865,7 +889,6 @@ export class Game {
                     this.ctx.fillStyle = b.color; 
                     this.ctx.fillRect(b.x, b.y, b.w, b.h); 
 
-                    // Renderiza as rachaduras dinamicamente
                     if (!b.indestructible && b.maxHits > 1) {
                         let damage = b.maxHits - b.hits;
                         if (damage > 0) {
@@ -873,7 +896,6 @@ export class Game {
                         }
                     }
                     
-                    // Chanfro 3D (Bevel)
                     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
                     this.ctx.beginPath();
                     this.ctx.moveTo(b.x, b.y);
