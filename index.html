@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Breakout Game</title>
-<link rel="stylesheet" href="./style.css?v=5">
+<link rel="stylesheet" href="./style.css?v=7">
 </head>
 <body>
 
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Botões Flutuantes do HUD -->
+    <!-- HUD Flutuante -->
     <div id="hudControls">
         <button id="btnPause" class="hud-btn" title="Pausar">⏸️</button>
         <button id="btnHudBgm" class="hud-btn" title="Música">🎵</button>
@@ -99,17 +99,15 @@
         <button class="menu-btn btn-quit">Menu Principal</button>
     </div>
 
-    <!-- Modal do Rolo 3D Customizado (SEM TAG SELECT) -->
+    <!-- Modal Seletor com Grid Arcade -->
     <div id="iosPickerOverlay">
         <div class="picker-card">
             <h2>Selecionar Fase</h2>
-            
-            <div class="picker-wheel-container" id="pickerWheelContainer">
-                <div class="picker-wheel-selection"></div>
-                <div class="picker-wheel-list" id="pickerWheelList"></div>
+            <div class="grid-picker-container" id="gridPickerContainer"></div>
+            <div class="picker-footer">
+                <button id="pickerCancelBtn" class="picker-footer-btn cancel">Cancelar</button>
+                <button id="pickerConfirmBtn" class="picker-footer-btn confirm">OK</button>
             </div>
-
-            <button id="pickerConfirmBtn" class="menu-btn btn-start" style="margin-top: 15px;">Confirmar</button>
         </div>
     </div>
 </div>
