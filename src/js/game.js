@@ -202,9 +202,21 @@ export class Game {
                     let isMoving = (val === 6);
                     let isBumper = (val === 7);
                     let hits = 1; let color = '#FFFFFF'; let points = 10; let indestructible = false;
+                    let lightBase = null; let darkBase = null; // Variáveis de cor 3D
                     
                     if (val === 6) { color = '#FF00FF'; points = 50; isMoving = true; hits = 2; }
-                    else if (val === 7) { color = '#FFFFFF'; points = 150; indestructible = true; isBumper = true; }
+                    else if (val === 7) { 
+                        points = 150; indestructible = true; isBumper = true; 
+                        
+                        // Determina a cor baseada na coluna (Esquerda = Verde, Direita = Amarelo)
+                        if (c < 4) {
+                            lightBase = '#00e676'; // Verde brilhante
+                            darkBase  = '#004d26'; // Verde escuro
+                        } else {
+                            lightBase = '#ffea00'; // Amarelo/Dourado brilhante
+                            darkBase  = '#807500'; // Amarelo escuro
+                        }
+                    }
                     else {
                         let type = BRICK_TYPES[r % BRICK_TYPES.length];
                         color = type.color; points = type.points;
@@ -223,7 +235,9 @@ export class Game {
                         status: 1, hits: hits, maxHits: hits, color: color, points: points, 
                         indestructible: indestructible, hasCapsule: false,
                         isMoving: isMoving, isBumper: isBumper,
-                        flashTimer: 0 
+                        flashTimer: 0,
+                        lightBase: lightBase, // Armazena a cor de luz
+                        darkBase: darkBase    // Armazena a cor de sombra
                     });
                 }
             }
@@ -394,14 +408,12 @@ export class Game {
         }
 
         if (isPausedForIntro) {
-            // --- MUDANÇA AQUI: Garante que a bola colada siga a raquete na pausa ---
             this.balls.forEach(ball => {
                 if (ball.stuck) {
                     ball.x = this.paddle.x + this.paddle.width / 2;
                     ball.y = this.paddle.y - ball.radius - 2;
                 }
             });
-            // -----------------------------------------------------------------------
             this.draw();
             return; 
         }
@@ -711,20 +723,99 @@ export class Game {
             this.ctx.beginPath(); this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); this.ctx.fill();
         });
 
+        // --- SISTEMA DE RENDERIZAÇÃO DE TIJOLOS E BUMPERS 3D ---
         this.bricks.forEach(b => {
             if (b.status === 1) { 
                 if (b.isBumper) {
                     let bumperRadius = (b.w / 2) * 1.45;
+                    let cx = b.x + b.w / 2;
+                    let cy = b.y + b.h / 2;
+                    let isHit = b.flashTimer > 0;
                     
-                    this.ctx.fillStyle = (b.flashTimer > 0) ? '#888888' : b.color;
+                    // A luz imaginária bate no topo esquerdo do bumper
+                    let lightX = cx - bumperRadius * 0.35;
+                    let lightY = cy - bumperRadius * 0.35;
+
+                    // 1. Sombra Projetada no tabuleiro
+                    this.ctx.save();
                     this.ctx.beginPath();
-                    this.ctx.arc(b.x + b.w/2, b.y + b.h/2, bumperRadius, 0, Math.PI * 2);
+                    this.ctx.arc(cx + 5, cy + 8, bumperRadius, 0, Math.PI * 2);
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    this.ctx.filter = 'blur(4px)';
+                    this.ctx.fill();
+                    this.ctx.restore();
+
+                    // 2. Corpo Externo (Plástico em volume 3D)
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.arc(cx, cy, bumperRadius, 0, Math.PI * 2);
+                    let gradOuter = this.ctx.createRadialGradient(lightX, lightY, bumperRadius * 0.1, cx, cy, bumperRadius * 1.1);
+                    gradOuter.addColorStop(0, b.lightBase);
+                    gradOuter.addColorStop(0.7, b.darkBase);
+                    gradOuter.addColorStop(1, '#000000');
+                    this.ctx.fillStyle = gradOuter;
                     this.ctx.fill();
                     
-                    this.ctx.fillStyle = '#000000';
+                    // Linha sutil de reflexo na borda externa
+                    this.ctx.lineWidth = 1;
+                    this.ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    this.ctx.stroke();
+                    this.ctx.restore();
+
+                    // 3. Fosso Interno (A cavidade onde a lâmpada entra)
+                    let innerR = bumperRadius * 0.65;
+                    this.ctx.save();
                     this.ctx.beginPath();
-                    this.ctx.arc(b.x + b.w/2, b.y + b.h/2, bumperRadius * 0.70, 0, Math.PI * 2);
+                    this.ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+                    // Gradiente invertido para parecer afundado
+                    let gradInner = this.ctx.createRadialGradient(cx + innerR*0.3, cy + innerR*0.3, innerR * 0.1, cx, cy, innerR);
+                    gradInner.addColorStop(0, b.lightBase);
+                    gradInner.addColorStop(1, '#000000');
+                    this.ctx.fillStyle = gradInner;
                     this.ctx.fill();
+                    this.ctx.restore();
+
+                    // 4. O Núcleo / Lâmpada do Bumper
+                    let coreR = bumperRadius * 0.45;
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+                    
+                    if (isHit) {
+                        // Bumper Aceso (A bola acabou de bater)
+                        let gradHit = this.ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
+                        gradHit.addColorStop(0, '#ffffff'); // Branco no centro
+                        gradHit.addColorStop(0.5, b.lightBase);
+                        gradHit.addColorStop(1, b.darkBase);
+                        
+                        this.ctx.shadowColor = b.lightBase; // Emite luz neon no tabuleiro
+                        this.ctx.shadowBlur = 15;
+                        this.ctx.fillStyle = gradHit;
+                    } else {
+                        // Bumper Apagado (Superfície plástica lisa e escura)
+                        let gradCore = this.ctx.createRadialGradient(lightX, lightY, coreR * 0.1, cx, cy, coreR);
+                        gradCore.addColorStop(0, 'rgba(255,255,255,0.8)'); // Ponto de luz no vidro do botão
+                        gradCore.addColorStop(0.4, b.darkBase);
+                        gradCore.addColorStop(1, '#000000'); // Sombra na base do botão
+                        this.ctx.fillStyle = gradCore;
+                    }
+                    this.ctx.fill();
+                    this.ctx.restore();
+
+                    // 5. Reflexos Especulares (Pequenos brilhos brancos curvos no plástico)
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(cx - bumperRadius * 0.4, cy - bumperRadius * 0.4, bumperRadius * 0.2, bumperRadius * 0.1, Math.PI / 4, 0, Math.PI * 2);
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    this.ctx.filter = 'blur(1px)';
+                    this.ctx.fill();
+
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(cx - innerR * 0.5, cy - innerR * 0.5, innerR * 0.3, innerR * 0.1, Math.PI / 4, 0, Math.PI * 2);
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    this.ctx.fill();
+                    this.ctx.restore();
+
                 } else {
                     this.ctx.fillStyle = b.color; 
                     this.drawRoundedRect(b.x, b.y, b.w, b.h, 4); 
