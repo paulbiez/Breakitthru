@@ -1,4 +1,5 @@
 // src/js/IosPicker.js
+import { playSound } from './audio.js';
 
 export class IosPicker {
     constructor(totalLevels, onSelect) {
@@ -26,6 +27,7 @@ export class IosPicker {
             item.type = 'button';
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
+                playSound('paddle'); // Som ao tocar na fase
                 this.selectLevel(i);
             });
             this.container.appendChild(item);

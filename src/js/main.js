@@ -2,7 +2,7 @@
 import { Game } from './game.js';
 import { IosPicker } from './IosPicker.js';
 import { initInputs } from './input.js';
-import { setBgmVolume, setSfxVolume, toggleBgmMute, toggleSfxMute, getAudioState, pauseBgm } from './audio.js';
+import { setBgmVolume, setSfxVolume, toggleBgmMute, toggleSfxMute, getAudioState, pauseBgm, playSound } from './audio.js';
 
 // Detecção de motor web para escopo de estilos
 function detectEngine() {
@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSoundUI();
             });
         });
+        bgmSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
     }
 
     const sfxSlider = document.getElementById('sfxVolumeSlider');
@@ -119,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSoundUI();
             });
         });
+        sfxSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
     }
 
     // --- BOTÕES HUD ---
@@ -172,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatePaddlePreview(e.target.value);
             });
         });
+        paddleSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
     }
 
     // 2. Tamanho da Bola (1 a 5)
@@ -195,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateBallSizePreview(e.target.value);
             });
         });
+        sizeSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
     }
 
     // 3. Velocidade da Bola (1 a 5) com Animação
@@ -215,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSpeedPreview(e.target.value);
             });
         });
+        speedSlider.addEventListener('change', () => playSound('wall')); // Som ao soltar
     }
 
     function speedAnimLoop() {
