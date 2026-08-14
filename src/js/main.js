@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectBtn.innerText = `Selecionar Fase: ${validLevel}`;
     }
 
-    // Instancia o verdadeiro rolo 3D IosPicker
+    // Instancia o Grid Picker
     const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
         let selected = parseInt(level, 10) || 1;
         game.currentLevel = selected;
