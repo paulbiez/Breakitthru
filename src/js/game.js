@@ -180,6 +180,50 @@ export class Game {
         this.ctx.fill();
     }
 
+    drawCracks(ctx, x, y, w, h, damageLevel) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+
+        const renderCrackPath = (points) => {
+            ctx.beginPath();
+            ctx.moveTo(x + points[0].x * w, y + points[0].y * h + 1);
+            for(let i = 1; i < points.length; i++) {
+                ctx.lineTo(x + points[i].x * w, y + points[i].y * h + 1);
+            }
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x + points[0].x * w, y + points[0].y * h);
+            for(let i = 1; i < points.length; i++) {
+                ctx.lineTo(x + points[i].x * w, y + points[i].y * h);
+            }
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        };
+
+        if (damageLevel >= 1) {
+            renderCrackPath([
+                {x: 0.1, y: 0}, {x: 0.25, y: 0.4}, {x: 0.15, y: 0.7}, {x: 0.4, y: 0.9}
+            ]);
+        }
+        
+        if (damageLevel >= 2) {
+            renderCrackPath([
+                {x: 0.85, y: 1}, {x: 0.7, y: 0.6}, {x: 0.8, y: 0.3}, {x: 0.45, y: 0.1}
+            ]);
+            renderCrackPath([
+                {x: 0.95, y: 0.3}, {x: 0.7, y: 0.4}, {x: 0.6, y: 0.6}
+            ]);
+        }
+        ctx.restore();
+    }
+
     initLevel(level) {
         this.bricks = [];
         this.bonuses = [];
@@ -201,27 +245,37 @@ export class Game {
                 if (val > 0) {
                     let isMoving = (val === 6);
                     let isBumper = (val === 7);
-                    let hits = 1; let color = '#FFFFFF'; let points = 10; let indestructible = false;
-                    let lightBase = null; let darkBase = null; 
+                    let hits = 1; 
+                    let color = '#FFFFFF'; 
+                    let points = 10; 
+                    let indestructible = false;
+                    let lightBase = null; 
+                    let darkBase = null; 
                     
-                    if (val === 6) { color = '#FF00FF'; points = 50; isMoving = true; hits = 2; }
+                    if (val === 6) { 
+                        color = '#FF00FF'; points = 50; isMoving = true; hits = 2; 
+                    }
                     else if (val === 7) { 
                         points = 150; indestructible = true; isBumper = true; 
                         if (c < 4) {
-                            lightBase = '#00e676'; 
-                            darkBase  = '#004d26'; 
+                            lightBase = '#00e676'; darkBase = '#004d26';
                         } else {
-                            lightBase = '#ffea00'; 
-                            darkBase  = '#807500'; 
+                            lightBase = '#ffea00'; darkBase = '#807500';
                         }
+                    }
+                    else if (val === 5) {
+                        color = '#DAA520'; hits = Infinity; points = 0; indestructible = true;
+                    }
+                    else if (val === 3) {
+                        color = '#FFFF00'; hits = 3; points = 30;
+                    }
+                    else if (val === 4) {
+                        color = '#FFD700'; hits = 4; points = 100;
                     }
                     else {
                         let type = BRICK_TYPES[r % BRICK_TYPES.length];
                         color = type.color; points = type.points;
                         if (val === 2) { color = '#FFD700'; points = 100; }
-                        else if (val === 3) { color = '#AAAAAA'; hits = 3; points = 15; }
-                        else if (val === 4) { color = '#FFD700'; hits = 4; points = 100; }
-                        else if (val === 5) { color = '#E0E0E0'; hits = Infinity; points = 0; indestructible = true; }
                     }
 
                     this.bricks.push({
@@ -529,7 +583,8 @@ export class Game {
                                             this.isCapsuleOnScreen = true;
                                         }
                                     } else {
-                                        if (b.hits === 3) b.color = '#888888'; if (b.hits === 2) b.color = '#666666'; if (b.hits === 1) b.color = '#444444';
+                                        if (b.hits === 2) b.color = '#DDDD00'; 
+                                        if (b.hits === 1) b.color = '#AAAA00'; 
                                     }
                                 }
                             }
@@ -721,11 +776,10 @@ export class Game {
             this.ctx.beginPath(); this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); this.ctx.fill();
         });
 
-        // --- NOVO SISTEMA DE RENDERIZAÇÃO: MISTURA BUMPERS 3D E TIJOLOS 16-BITS ---
+        // RENDERIZAÇÃO DOS TIJOLOS, BUMPERS E RACHADURAS
         this.bricks.forEach(b => {
             if (b.status === 1) { 
                 if (b.isBumper) {
-                    // DESENHO BUMPER PINBALL (1.45x)
                     let bumperRadius = (b.w / 2) * 1.45;
                     let cx = b.x + b.w / 2;
                     let cy = b.y + b.h / 2;
@@ -806,14 +860,20 @@ export class Game {
                     this.ctx.restore();
 
                 } else {
-                    // DESENHO NOVO: TIJOLO CHANFRADO 16-BITS (BEVEL)
-                    const depth = 4; // Profundidade do chanfro 3D
+                    const depth = 4;
                     
-                    // Fundo da cor principal do tijolo
                     this.ctx.fillStyle = b.color; 
                     this.ctx.fillRect(b.x, b.y, b.w, b.h); 
+
+                    // Renderiza as rachaduras dinamicamente
+                    if (!b.indestructible && b.maxHits > 1) {
+                        let damage = b.maxHits - b.hits;
+                        if (damage > 0) {
+                            this.drawCracks(this.ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, damage);
+                        }
+                    }
                     
-                    // Brilho Superior (Face atingida pela luz)
+                    // Chanfro 3D (Bevel)
                     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
                     this.ctx.beginPath();
                     this.ctx.moveTo(b.x, b.y);
@@ -822,7 +882,6 @@ export class Game {
                     this.ctx.lineTo(b.x + depth, b.y + depth);
                     this.ctx.fill();
 
-                    // Brilho Esquerdo (Face atingida pela luz)
                     this.ctx.beginPath();
                     this.ctx.moveTo(b.x, b.y);
                     this.ctx.lineTo(b.x + depth, b.y + depth);
@@ -830,7 +889,6 @@ export class Game {
                     this.ctx.lineTo(b.x, b.y + b.h);
                     this.ctx.fill();
 
-                    // Sombra Inferior (Face oposta à luz)
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
                     this.ctx.beginPath();
                     this.ctx.moveTo(b.x, b.y + b.h);
@@ -839,7 +897,6 @@ export class Game {
                     this.ctx.lineTo(b.x + depth, b.y + b.h - depth);
                     this.ctx.fill();
 
-                    // Sombra Direita (Face oposta à luz)
                     this.ctx.beginPath();
                     this.ctx.moveTo(b.x + b.w, b.y);
                     this.ctx.lineTo(b.x + b.w, b.y + b.h);
@@ -847,7 +904,6 @@ export class Game {
                     this.ctx.lineTo(b.x + b.w - depth, b.y + depth);
                     this.ctx.fill();
                     
-                    // Contorno sutil preto para destacar os blocos uns dos outros
                     this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
                     this.ctx.lineWidth = 1;
                     this.ctx.strokeRect(b.x, b.y, b.w, b.h);

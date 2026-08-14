@@ -2,27 +2,37 @@
 
 export function getLevelPattern(level) {
     const patterns = {
-        // A NOVA FASE 1 (Design "C M" com Bumpers inferiores e tijolo extra)
+        // FASE 1: "C M" com Bumpers Pinball e tijolos 16-bits
         1: [
             [1, 1, 1, 0, 1, 0, 0, 0, 1], // Linha Vermelha
-            [1, 0, 0, 0, 1, 1, 0, 1, 1], // Linha Laranja (Bumper antigo removido)
+            [1, 0, 0, 0, 1, 1, 0, 1, 1], // Linha Laranja
             [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Amarela
             [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Verde Limão
-            [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Verde Escuro (Tijolo extra na Col 6)
+            [1, 0, 0, 0, 1, 0, 1, 0, 1], // Linha Verde Escuro
             [1, 0, 0, 0, 1, 0, 0, 0, 1], // Linha Ciano
             [1, 1, 1, 0, 1, 0, 0, 0, 1], // Linha Azul Claro
-            [0, 0, 0, 0, 0, 0, 0, 0, 0], // Espaço vazio para a bola circular
-            [0, 0, 0, 0, 0, 0, 0, 0, 0], // Espaço vazio para a bola circular
-            [0, 0, 7, 0, 0, 0, 7, 0, 0]  // Bumpers Esféricos (Col 2 e Col 6)
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 7, 0, 0, 0, 7, 0, 0]  // Bumpers Pinball (Verde e Amarelo)
         ],
-        
-        // Fases genéricas de 2 a 10 (Você pode alterar depois)
+
+        // FASE 2: A ESPIRAL (Entrada Top-Left + Paredes Douradas + Núcleo Amarelo de 3 Hits com Rachadura)
         2: [
-            [1, 0, 1, 0, 1, 0, 1, 0, 1],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [1, 0, 1, 0, 1, 0, 1, 0, 1],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0]
+            [5, 0, 5, 5, 5, 5, 5, 5, 5],
+            [5, 0, 5, 0, 0, 0, 0, 0, 5],
+            [5, 0, 5, 0, 5, 5, 5, 0, 5],
+            [5, 0, 5, 0, 0, 0, 5, 0, 5],
+            [5, 0, 5, 0, 3, 0, 5, 0, 5], // Núcleo Amarelo
+            [5, 0, 5, 0, 3, 0, 5, 0, 5], // Núcleo Amarelo
+            [5, 0, 5, 0, 3, 0, 5, 0, 5], // Núcleo Amarelo
+            [5, 0, 5, 0, 5, 0, 5, 0, 5],
+            [5, 0, 5, 0, 0, 0, 5, 0, 5],
+            [5, 0, 5, 5, 5, 5, 5, 0, 5],
+            [5, 0, 0, 0, 0, 0, 0, 0, 5],
+            [5, 5, 5, 5, 5, 5, 5, 5, 5]
         ],
+
+        // Fases 3 a 10
         3: [
             [1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 3, 3, 3, 1, 3, 3, 3, 1],
