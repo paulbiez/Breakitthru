@@ -17,7 +17,7 @@ export class IosPicker {
     init() {
         if (!this.overlay || !this.container) return;
 
-        // Renderiza os 20 blocos numéricos
+        // Renderiza os 20 blocos numéricos do Grid
         this.container.innerHTML = '';
         for (let i = 1; i <= this.totalLevels; i++) {
             const item = document.createElement('button');

@@ -4,7 +4,24 @@ import { IosPicker } from './IosPicker.js';
 import { initInputs } from './input.js';
 import { setBgmVolume, setSfxVolume, toggleBgmMute, toggleSfxMute, getAudioState, pauseBgm } from './audio.js';
 
+// Detecção de motor web para escopo de estilos
+function detectEngine() {
+    const ua = navigator.userAgent;
+    const body = document.body;
+    body.classList.remove('is-chromium', 'is-webkit', 'is-firefox');
+    
+    if (/firefox|fxios/i.test(ua)) {
+        body.classList.add('is-firefox');
+    } else if (/safari/i.test(ua) && !/chrome|chromium|crios|android/i.test(ua)) {
+        body.classList.add('is-webkit');
+    } else {
+        body.classList.add('is-chromium');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    detectEngine();
+
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
 
@@ -22,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectBtn.innerText = `Selecionar Fase: ${validLevel}`;
     }
 
-    // Instancia o Grid Picker
+    // Instancia o Grid Picker (1 a 20)
     const picker = new IosPicker(game.TOTAL_LEVELS, (level) => {
         let selected = parseInt(level, 10) || 1;
         game.currentLevel = selected;
@@ -83,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnHudSfx) btnHudSfx.style.opacity = state.isSfxMuted ? "0.4" : "1.0";
     }
 
-    // --- CONTROLES DE SOM (Ouvindo input e change) ---
+    // --- CONTROLES DE SOM ---
     const bgmSlider = document.getElementById('bgmVolumeSlider');
     if (bgmSlider) {
         ['input', 'change'].forEach(evt => {
@@ -104,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- BOTÕES HUD IN-GAME ---
+    // --- BOTÕES HUD ---
     const btnPause = document.getElementById('btnPause');
     if (btnPause) {
         btnPause.addEventListener('click', () => {
@@ -222,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     requestAnimationFrame(speedAnimLoop);
 
-    // Inicialização imediata dos previews
+    // Inicialização dos previews com valores atuais
     updatePaddlePreview(game.paddleLevel);
     updateSpeedPreview(game.ballSpeedLevel);
     updateBallSizePreview(game.ballSizeLevel);

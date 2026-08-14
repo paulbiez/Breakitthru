@@ -20,8 +20,8 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        // Configurações numéricas dos Sliders
-        this.paddleLevel = 10; // 1 a 10 (10 = 85.05px)
+        // Configurações dos Sliders
+        this.paddleLevel = 10;   // 1 a 10 (10 = 85.05px)
         this.ballSpeedLevel = 3; // 1 a 5
         this.ballSizeLevel = 3;  // 1 a 5
 

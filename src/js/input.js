@@ -1,42 +1,39 @@
 // src/js/input.js
 
-export function initInputs(canvas, paddle, callbacks, shouldIgnoreInput) {
-    function handleMove(clientX) {
-        if (shouldIgnoreInput && shouldIgnoreInput()) return;
+export function initInputs(canvas, paddle, callbacks, isBlockedFn) {
+    function updatePaddlePosition(clientX) {
+        if (isBlockedFn && isBlockedFn()) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const mouseX = (clientX - rect.left) * scaleX;
         
-        let rect = canvas.getBoundingClientRect();
-        let mouseX = clientX - rect.left;
-        
-        let scaleX = canvas.width / rect.width;
-        let targetX = (mouseX * scaleX) - (paddle.width / 2);
-        
-        if (targetX < 0) targetX = 0;
-        if (targetX + paddle.width > canvas.width) {
-            targetX = canvas.width - paddle.width;
+        paddle.x = mouseX - paddle.width / 2;
+        if (paddle.x < 0) paddle.x = 0;
+        if (paddle.x + paddle.width > canvas.width) {
+            paddle.x = canvas.width - paddle.width;
         }
-
-        paddle.x = targetX;
     }
 
-    canvas.addEventListener('touchmove', (e) => {
-        if (shouldIgnoreInput && shouldIgnoreInput()) return;
-        e.preventDefault();
-        if (e.touches.length > 0) {
-            handleMove(e.touches[0].clientX);
-        }
-    }, { passive: false });
-
-    canvas.addEventListener('touchstart', (e) => {
-        if (shouldIgnoreInput && shouldIgnoreInput()) return;
-        e.preventDefault();
-        if (callbacks.onLaunch) callbacks.onLaunch();
-        if (e.touches.length > 0) {
-            handleMove(e.touches[0].clientX);
-        }
-    }, { passive: false });
-
+    // Mouse Desktop
     canvas.addEventListener('mousemove', (e) => {
-        if (shouldIgnoreInput && shouldIgnoreInput()) return;
-        handleMove(e.clientX);
+        updatePaddlePosition(e.clientX);
     });
+
+    canvas.addEventListener('click', () => {
+        if (callbacks && callbacks.onLaunch) callbacks.onLaunch();
+    });
+
+    // Touch Mobile
+    canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+            updatePaddlePosition(e.touches[0].clientX);
+            if (callbacks && callbacks.onLaunch) callbacks.onLaunch();
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            updatePaddlePosition(e.touches[0].clientX);
+        }
+    }, { passive: true });
 }

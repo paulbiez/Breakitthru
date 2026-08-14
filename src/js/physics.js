@@ -1,45 +1,43 @@
-/**
- * Lógica de Física do Jogo
- */
+// src/js/physics.js
 
-// Verifica se dois retângulos colidem (usado para bricks)
-export function isColliding(ball, rect) {
-    return ball.x + ball.radius > rect.x &&
-           ball.x - ball.radius < rect.x + rect.w &&
-           ball.y + ball.radius > rect.y &&
-           ball.y - ball.radius < rect.y + rect.h;
+export function isColliding(circle, rect) {
+    let distX = Math.abs(circle.x - rect.x - rect.w / 2);
+    let distY = Math.abs(circle.y - rect.y - rect.h / 2);
+
+    if (distX > (rect.w / 2 + circle.radius)) return false;
+    if (distY > (rect.h / 2 + circle.radius)) return false;
+
+    if (distX <= (rect.w / 2)) return true;
+    if (distY <= (rect.h / 2)) return true;
+
+    let dx = distX - rect.w / 2;
+    let dy = distY - rect.h / 2;
+    return (dx * dx + dy * dy <= (circle.radius * circle.radius));
 }
 
-// Calcula a nova direção da bola após colidir com um tijolo
 export function resolveBrickCollision(ball, brick, brickW, brickH) {
-    let overlapLeft = (ball.x + ball.radius) - brick.x;
-    let overlapRight = (brick.x + brickW) - (ball.x - ball.radius);
-    let overlapTop = (ball.y + ball.radius) - brick.y;
-    let overlapBottom = (brick.y + brickH) - (ball.y - ball.radius);
+    let prevX = ball.x - ball.dx;
+    let prevY = ball.y - ball.dy;
 
-    let minOverlapX = Math.min(overlapLeft, overlapRight);
-    let minOverlapY = Math.min(overlapTop, overlapBottom);
-
-    if (minOverlapX < minOverlapY) {
-        ball.dx *= -1;
-        // Ajuste de posição para não prender a bola
-        if (overlapLeft < overlapRight) ball.x = brick.x - ball.radius;
-        else ball.x = brick.x + brickW + ball.radius;
+    if (prevY + ball.radius <= brick.y || prevY - ball.radius >= brick.y + brickH) {
+        ball.dy = -ball.dy;
+    } else if (prevX + ball.radius <= brick.x || prevX - ball.radius >= brick.x + brickW) {
+        ball.dx = -ball.dx;
     } else {
-        ball.dy *= -1;
-        if (overlapTop < overlapBottom) ball.y = brick.y - ball.radius;
-        else ball.y = brick.y + brickH + ball.radius;
+        ball.dy = -ball.dy;
     }
 }
 
-// Lógica de colisão da raquete (permite controlar o ângulo)
 export function resolvePaddleCollision(ball, paddle) {
-    ball.dy = -Math.abs(ball.dy);
-    let hitPoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
-    ball.dx = hitPoint * 4;
-    
-    // Evita velocidade horizontal muito baixa
-    if (Math.abs(ball.dx) < 0.5) ball.dx = hitPoint < 0 ? -1.5 : 1.5;
+    let collidePoint = ball.x - (paddle.x + paddle.width / 2);
+    collidePoint = collidePoint / (paddle.width / 2);
+    collidePoint = Math.max(-1, Math.min(1, collidePoint));
+
+    let angle = collidePoint * (Math.PI / 3); // Ângulo máximo de 60 graus
+    let currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+    let speed = Math.max(currentSpeed, 4.5);
+
+    ball.dx = speed * Math.sin(angle);
+    ball.dy = -speed * Math.cos(angle);
+    ball.y = paddle.y - ball.radius - 1;
 }
-
-
