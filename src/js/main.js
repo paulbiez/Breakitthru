@@ -27,10 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const game = new Game(canvas);
     let wasRunningBeforeRotation = false;
 
-    // Força Menu Principal aberto na inicialização
-    const mainMenu = document.getElementById('menu');
-    if (mainMenu) mainMenu.style.display = 'flex';
-
     let validLevel = parseInt(game.currentLevel, 10);
     if (isNaN(validLevel) || validLevel < 1) {
         validLevel = 1;
@@ -50,11 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initInputs(canvas, game.paddle, 
         { onLaunch: () => {
-            if (game.gameRunning && !game.levelIntroActive && !game.prepareActive && !game.deathPauseActive) {
+            if (!game.levelIntroActive && !game.prepareActive && !game.deathPauseActive) {
                 game.launchBalls();
             }
         }}, 
-        () => !game.gameRunning || game.deathPauseActive || game.warpAnimationActive || game.victoryExplosionActive
+        () => game.deathPauseActive || game.warpAnimationActive || game.victoryExplosionActive
     );
 
     window.addEventListener("orientationchange", () => {
@@ -84,7 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function hideAllMenus() {
-        document.querySelectorAll('.modal-menu').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('#menu, #settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
+                .forEach(el => el.style.display = 'none');
     }
 
     function updateSoundUI() {
@@ -156,17 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CONTROLE DA NAVE (ESCALA 1 A 5) ---
     const paddleSlider = document.getElementById('paddleSlider');
-    if (paddleSlider) {
-        paddleSlider.min = "1";
-        paddleSlider.max = "5";
-        paddleSlider.value = game.paddleLevel.toString();
-    }
-
     function updatePaddlePreview(val) {
-        let lvl = parseInt(val, 10);
-        if (lvl > 5) lvl = 5;
-        if (lvl < 1) lvl = 1;
-
+        const lvl = parseInt(val, 10);
         const text = document.getElementById('paddleValText');
         const preview = document.getElementById('paddlePreview');
         if (text) text.innerText = lvl;
@@ -178,13 +166,11 @@ document.addEventListener('DOMContentLoaded', () => {
             preview.style.width = calculatedW + 'px';
         }
     }
-
     if (paddleSlider) {
         ['input', 'change'].forEach(evt => {
             paddleSlider.addEventListener(evt, (e) => {
-                let clampedVal = Math.min(5, Math.max(1, parseInt(e.target.value, 10)));
-                game.setPaddleLevel(clampedVal);
-                updatePaddlePreview(clampedVal);
+                game.setPaddleLevel(e.target.value);
+                updatePaddlePreview(e.target.value);
             });
         });
         paddleSlider.addEventListener('change', () => playSound('wall'));
@@ -214,6 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let currentSpeedVal = 3;
+    let animPos = 0;
+    let animDir = 1;
+
     const speedSlider = document.getElementById('speedSlider');
     function updateSpeedPreview(val) {
         currentSpeedVal = parseInt(val, 10);
@@ -229,6 +218,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         speedSlider.addEventListener('change', () => playSound('wall'));
     }
+
+    function speedAnimLoop() {
+        const track = document.getElementById('speedBallTrack');
+        const ball = document.getElementById('speedBallAnim');
+        if (track && ball) {
+            const maxTrackWidth = track.clientWidth - 12;
+            const speedMultipliers = [0.8, 1.4, 2.2, 3.2, 4.5];
+            const speed = speedMultipliers[currentSpeedVal - 1] || 2.2;
+
+            animPos += speed * animDir;
+            if (animPos >= maxTrackWidth) {
+                animPos = maxTrackWidth;
+                animDir = -1;
+            } else if (animPos <= 0) {
+                animPos = 0;
+                animDir = 1;
+            }
+            ball.style.left = animPos + 'px';
+        }
+        requestAnimationFrame(speedAnimLoop);
+    }
+    requestAnimationFrame(speedAnimLoop);
 
     updatePaddlePreview(game.paddleLevel);
     updateSpeedPreview(game.ballSpeedLevel);
@@ -271,9 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSettingsPaddle) {
         btnSettingsPaddle.addEventListener('click', () => {
             hideAllMenus();
-            if (paddleSlider) {
-                paddleSlider.value = game.paddleLevel;
-            }
+            if (paddleSlider) paddleSlider.value = game.paddleLevel;
             updatePaddlePreview(game.paddleLevel);
             document.getElementById('settingsPaddleMenu').style.display = 'flex';
         });
@@ -323,10 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.querySelector('#pauseMenu .btn-continue')?.addEventListener('click', () => { 
-        hideAllMenus(); 
-        game.resumeGame(); 
-    });
+    document.querySelector('#pauseMenu .btn-continue')?.addEventListener('click', () => game.resumeGame());
     document.querySelector('#pauseMenu .btn-restart')?.addEventListener('click', () => game.restartFromLevel1());
     document.querySelector('#pauseMenu .btn-quit')?.addEventListener('click', () => game.quitToMainMenu());
 

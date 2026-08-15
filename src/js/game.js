@@ -20,7 +20,7 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        this.paddleLevel = 3; 
+        this.paddleLevel = 3; // Padrão ajustado para 3
         this.ballSpeedLevel = 3; 
         this.ballSizeLevel = 3;  
 
@@ -57,6 +57,8 @@ export class Game {
 
         this.initLevel(this.currentLevel);
         this.applyPaddleSettings();
+        
+        // CORREÇÃO DO BUG: Cria a bola e acopla à nave imediatamente no boot do jogo
         this.resetBall('none'); 
     }
 
@@ -77,6 +79,7 @@ export class Game {
     applyPaddleSettings() {
         const minW = 35;
         const maxW = 85.05;
+        // Escala matemática recalculada para 5 níveis (divide por 4)
         this.paddle.width = minW + ((this.paddleLevel - 1) / 4) * (maxW - minW);
 
         if (this.paddle.x < 0) this.paddle.x = 0;
@@ -107,6 +110,8 @@ export class Game {
     }
 
     resumeGame() { 
+        let pauseEl = document.getElementById('pauseMenu');
+        if (pauseEl) pauseEl.style.display = 'none';
         playBgm();
         this.gameRunning = true; 
     }
@@ -342,7 +347,8 @@ export class Game {
             this.prepareActive = true;
             this.prepareTimer = 180;
         } else {
-            this.balls[0].stuck = true; 
+            // Em estado idle/boot, mantém a bola sobre a nave sem disparar
+            this.balls[0].stuck = true;
         }
     }
 
