@@ -267,13 +267,13 @@ export class Game {
                         }
                     }
                     else if (val === 8) {
-                        color = '#FFFF00'; 
+                        color = '#DAA520'; // A cor do Ouro, idêntica ao bloco 5
                         hits = 3; 
                         points = 0; 
-                        indestructible = true; 
-                        isKinetic = true;
+                        indestructible = true; // Ignorado na contagem de vitória
+                        isKinetic = true;      // Ativa a mecânica de deslocamento
                         speed = 0.8;
-                        moveRange = 30;
+                        moveRange = this.brickW + this.padding; // Desliza exatamente 1 bloco
                     }
                     else if (val === 5) {
                         color = '#DAA520'; hits = Infinity; points = 0; indestructible = true;
@@ -647,6 +647,7 @@ export class Game {
             }
         }
 
+        // Verifica vitória ignorando blocos isKinetic e indestructible
         let remainingDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible && !b.isKinetic).length;
         if (remainingDestructibleBricks === 0) { this.advanceToNextLevel(); return; }
 
@@ -915,6 +916,7 @@ export class Game {
                     this.ctx.fillStyle = b.color; 
                     this.ctx.fillRect(b.x, b.y, b.w, b.h); 
 
+                    // Ignora as rachaduras dinâmicas e cores em blocos isKinetic
                     if (!b.indestructible && !b.isKinetic && b.maxHits > 1) {
                         let damage = b.maxHits - b.hits;
                         if (damage > 0) {
