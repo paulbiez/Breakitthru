@@ -4,31 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Breakout Arcade</title>
+    <!-- O seu CSS volta a ter o controle total do visual -->
     <link rel="stylesheet" href="src/css/style.css">
-    <style>
-        /* Blindagem de Layout: Garante que os menus fiquem por cima do jogo */
-        #gameContainer { position: relative; width: 400px; height: 600px; margin: 0 auto; overflow: hidden; background: #0b0b12; }
-        #gameCanvas { display: block; width: 100%; height: 100%; }
-        .modal-menu {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 18, 0.95);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 1000; color: white; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-            text-align: center;
-        }
-        .menu-btn {
-            background: #2c2c34; color: #fff; border: 1px solid #555; border-radius: 8px;
-            padding: 14px 24px; margin: 8px 0; font-size: 16px; font-weight: bold;
-            cursor: pointer; width: 80%; max-width: 250px; text-transform: uppercase;
-        }
-        .menu-btn.primary { background: #1e90ff; border-color: #00bfff; }
-        .menu-btn:active { transform: scale(0.95); }
-        .setting-row { margin: 15px 0; display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .preview-box { margin: 10px 0 20px 0; min-height: 20px; display: flex; justify-content: center; align-items: center;}
-        #paddlePreview { background: #fff; height: 12px; border-radius: 6px; }
-        #hudButtons { position: absolute; top: 5px; right: 5px; z-index: 500; display: flex; gap: 5px; }
-        .hud-btn { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-weight: bold;}
-    </style>
 </head>
 <body>
     <div id="gameContainer">
@@ -42,104 +19,110 @@
             <button id="btnHudSfx" class="hud-btn" aria-label="Efeitos Sonoros">🔊</button>
         </div>
 
-        <!-- Menu Principal -->
+        <!-- Menu Principal (Forçamos apenas o display flex no HTML para não sumir no boot) -->
         <div id="menu" class="modal-menu" style="display: flex;">
-            <h1 style="color: #FFD700; font-size: 2.5rem; margin-bottom: 30px;">BREAKOUT</h1>
-            <button id="btnStart" class="menu-btn primary">Iniciar Jogo</button>
-            <button id="selectLevelBtn" class="menu-btn">Selecionar Fase: 1</button>
-            <button id="btnSettings" class="menu-btn">Configurações</button>
+            <h1 class="game-title">BREAKOUT</h1>
+            <button id="btnStart" class="menu-btn primary">INICIAR JOGO</button>
+            <button id="selectLevelBtn" class="menu-btn">SELECIONAR FASE: 1</button>
+            <button id="btnSettings" class="menu-btn">CONFIGURAÇÕES</button>
         </div>
 
         <!-- Menu de Configurações Geral -->
         <div id="settingsMenu" class="modal-menu" style="display: none;">
-            <h2 style="margin-bottom: 20px;">Configurações</h2>
-            <button id="btnSettingsSound" class="menu-btn">Sons & Música</button>
-            <button id="btnSettingsPaddle" class="menu-btn">Tamanho da Nave</button>
-            <button id="btnSettingsBallSpeed" class="menu-btn">Velocidade da Bola</button>
-            <button id="btnSettingsBallSize" class="menu-btn">Tamanho da Bola</button>
-            <button id="btnSettingsSave" class="menu-btn primary" style="margin-top: 20px;">Salvar e Voltar</button>
+            <h2>Configurações</h2>
+            <button id="btnSettingsSound" class="menu-btn">SONS & MÚSICA</button>
+            <button id="btnSettingsPaddle" class="menu-btn">TAMANHO DA NAVE</button>
+            <button id="btnSettingsBallSpeed" class="menu-btn">VELOCIDADE DA BOLA</button>
+            <button id="btnSettingsBallSize" class="menu-btn">TAMANHO DA BOLA</button>
+            <button id="btnSettingsSave" class="menu-btn primary">SALVAR E VOLTAR</button>
         </div>
 
         <!-- Submenu: Sons & Música -->
         <div id="settingsSoundMenu" class="modal-menu" style="display: none;">
-            <h2 style="margin-bottom: 20px;">Áudio</h2>
-            <div style="margin-bottom: 20px;">
+            <h2>Áudio</h2>
+            <div class="setting-group">
                 <label>Música de Fundo</label>
                 <div class="setting-row">
                     <input type="range" id="bgmVolumeSlider" min="0" max="100" value="50" />
                     <span id="bgmValText">50%</span>
                 </div>
             </div>
-            <div style="margin-bottom: 20px;">
+            <div class="setting-group">
                 <label>Efeitos Sonoros</label>
                 <div class="setting-row">
                     <input type="range" id="sfxVolumeSlider" min="0" max="100" value="50" />
                     <span id="sfxValText">50%</span>
                 </div>
             </div>
-            <button id="btnSoundBack" class="menu-btn">Voltar</button>
+            <button id="btnSoundBack" class="menu-btn">VOLTAR</button>
         </div>
 
-        <!-- Submenu: Tamanho da Nave (Escala 1 a 5) -->
+        <!-- Submenu: Tamanho da Nave -->
         <div id="settingsPaddleMenu" class="modal-menu" style="display: none;">
-            <h2 style="margin-bottom: 20px;">Tamanho da Nave</h2>
+            <h2>Tamanho da Nave</h2>
             <div class="setting-row">
                 <input type="range" id="paddleSlider" min="1" max="5" value="3" />
-                <span id="paddleValText" style="font-weight: bold; font-size: 1.2rem;">3</span>
+                <span id="paddleValText">3</span>
             </div>
             <div class="preview-box">
                 <div id="paddlePreview"></div>
             </div>
-            <button id="btnPaddleBack" class="menu-btn">Voltar</button>
+            <button id="btnPaddleBack" class="menu-btn">VOLTAR</button>
         </div>
 
         <!-- Submenu: Velocidade da Bola -->
         <div id="settingsBallSpeedMenu" class="modal-menu" style="display: none;">
-            <h2 style="margin-bottom: 20px;">Velocidade da Bola</h2>
+            <h2>Velocidade da Bola</h2>
             <div class="setting-row">
                 <input type="range" id="speedSlider" min="1" max="5" value="3" />
-                <span id="speedValText" style="font-weight: bold; font-size: 1.2rem;">3</span>
+                <span id="speedValText">3</span>
             </div>
-            <button id="btnSpeedBack" class="menu-btn">Voltar</button>
+            <div class="preview-box">
+                <div id="speedBallTrack">
+                    <div id="speedBallAnim"></div>
+                </div>
+            </div>
+            <button id="btnSpeedBack" class="menu-btn">VOLTAR</button>
         </div>
 
         <!-- Submenu: Tamanho da Bola -->
         <div id="settingsBallSizeMenu" class="modal-menu" style="display: none;">
-            <h2 style="margin-bottom: 20px;">Tamanho da Bola</h2>
+            <h2>Tamanho da Bola</h2>
             <div class="setting-row">
                 <input type="range" id="sizeSlider" min="1" max="5" value="3" />
-                <span id="sizeValText" style="font-weight: bold; font-size: 1.2rem;">3</span>
+                <span id="sizeValText">3</span>
             </div>
             <div class="preview-box">
-                <div id="ballSizePreview" style="background: white; border-radius: 50%;"></div>
+                <div id="ballSizePreview"></div>
             </div>
-            <button id="btnSizeBack" class="menu-btn">Voltar</button>
+            <button id="btnSizeBack" class="menu-btn">VOLTAR</button>
         </div>
 
         <!-- Menu de Pause -->
         <div id="pauseMenu" class="modal-menu" style="display: none;">
-            <h2 style="margin-bottom: 20px;">Jogo Pausado</h2>
-            <button class="menu-btn btn-continue primary">Continuar</button>
-            <button class="menu-btn btn-restart">Reiniciar Fase 1</button>
-            <button class="menu-btn btn-quit">Menu Principal</button>
+            <h2>Jogo Pausado</h2>
+            <button class="menu-btn btn-continue primary">CONTINUAR</button>
+            <button class="menu-btn btn-restart">REINICIAR FASE 1</button>
+            <button class="menu-btn btn-quit">MENU PRINCIPAL</button>
         </div>
 
         <!-- Menu de Game Over -->
         <div id="gameOverMenu" class="modal-menu" style="display: none;">
-            <h2 style="color: #FF2A2A; margin-bottom: 10px;">FIM DE JOGO</h2>
-            <p id="finalScore" style="margin-bottom: 20px;">Pontos Totais: 0</p>
-            <button class="menu-btn btn-continue primary">Continuar (3 Vidas)</button>
-            <button class="menu-btn btn-quit">Menu Principal</button>
+            <h2 id="gameOverTitle">FIM DE JOGO</h2>
+            <p id="finalScore" class="score-display">Pontos Totais: 0</p>
+            <button class="menu-btn btn-continue primary">CONTINUAR (3 VIDAS)</button>
+            <button class="menu-btn btn-quit">MENU PRINCIPAL</button>
         </div>
 
         <!-- Tela de Vitória -->
         <div id="winOverlay" class="modal-menu" style="display: none;">
-            <h2 style="color: #00FF00; margin-bottom: 10px;">PARABÉNS!</h2>
-            <p id="winScore" style="margin-bottom: 20px;">Pontos Totais: 0</p>
-            <button class="menu-btn btn-quit primary">Menu Principal</button>
+            <h2 class="win-title">PARABÉNS!</h2>
+            <p id="winScore" class="score-display">Pontos Totais: 0</p>
+            <button class="menu-btn btn-quit primary">MENU PRINCIPAL</button>
         </div>
     </div>
 
+    <!-- Script de Inicialização Modular -->
     <script type="module" src="src/js/main.js"></script>
 </body>
 </html>
