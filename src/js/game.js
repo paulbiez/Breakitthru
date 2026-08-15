@@ -20,11 +20,11 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        this.paddleLevel = 3; // Padrão ajustado para 3
+        this.paddleLevel = 10;   
         this.ballSpeedLevel = 3; 
         this.ballSizeLevel = 3;  
 
-        this.paddle = { x: 157.5, y: 520, width: 60.025, height: 12, glue: false, alpha: 1.0, extraScale: 0 };
+        this.paddle = { x: 157.5, y: 520, width: 85.05, height: 12, glue: false, alpha: 1.0, extraScale: 0 };
         this.balls = [];
         this.bricks = [];
         this.bonuses = [];
@@ -57,9 +57,6 @@ export class Game {
 
         this.initLevel(this.currentLevel);
         this.applyPaddleSettings();
-        
-        // CORREÇÃO DO BUG: Cria a bola e acopla à nave imediatamente no boot do jogo
-        this.resetBall('none'); 
     }
 
     setPaddleLevel(lvl) {
@@ -79,8 +76,7 @@ export class Game {
     applyPaddleSettings() {
         const minW = 35;
         const maxW = 85.05;
-        // Escala matemática recalculada para 5 níveis (divide por 4)
-        this.paddle.width = minW + ((this.paddleLevel - 1) / 4) * (maxW - minW);
+        this.paddle.width = minW + ((this.paddleLevel - 1) / 9) * (maxW - minW);
 
         if (this.paddle.x < 0) this.paddle.x = 0;
         if (this.paddle.x + this.paddle.width > this.canvas.width) {
@@ -103,7 +99,8 @@ export class Game {
         playBgm();
         this.score = 0;
         this.lives = this.INITIAL_LIVES;
-        document.querySelectorAll('.modal-menu').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('#menu, #settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
+                .forEach(el => el.style.display = 'none');
         this.initLevel(this.currentLevel);
         this.resetBall('intro');
         this.gameRunning = true;
@@ -121,7 +118,8 @@ export class Game {
     quitToMainMenu() { 
         this.gameRunning = false; 
         stopBgm();
-        document.querySelectorAll('.modal-menu').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('#settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
+                .forEach(el => el.style.display = 'none');
         document.getElementById('menu').style.display = 'flex';
         let btn = document.getElementById('selectLevelBtn');
         if (btn) btn.innerText = `Selecionar Fase: ${this.currentLevel}`;
@@ -269,13 +267,13 @@ export class Game {
                         }
                     }
                     else if (val === 8) {
-                        color = '#DAA520'; 
+                        color = '#DAA520'; // A cor do Ouro, idêntica ao bloco 5
                         hits = 3; 
                         points = 0; 
-                        indestructible = true; 
-                        isKinetic = true;      
+                        indestructible = true; // Ignorado na contagem de vitória
+                        isKinetic = true;      // Ativa a mecânica de deslocamento
                         speed = 0.8;
-                        moveRange = this.brickW + this.padding; 
+                        moveRange = this.brickW + this.padding; // Desliza exatamente 1 bloco
                     }
                     else if (val === 5) {
                         color = '#DAA520'; hits = Infinity; points = 0; indestructible = true;
@@ -347,8 +345,7 @@ export class Game {
             this.prepareActive = true;
             this.prepareTimer = 180;
         } else {
-            // Em estado idle/boot, mantém a bola sobre a nave sem disparar
-            this.balls[0].stuck = true;
+            this.launchBalls();
         }
     }
 
@@ -650,6 +647,7 @@ export class Game {
             }
         }
 
+        // Verifica vitória ignorando blocos isKinetic e indestructible
         let remainingDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible && !b.isKinetic).length;
         if (remainingDestructibleBricks === 0) { this.advanceToNextLevel(); return; }
 
@@ -918,6 +916,7 @@ export class Game {
                     this.ctx.fillStyle = b.color; 
                     this.ctx.fillRect(b.x, b.y, b.w, b.h); 
 
+                    // Ignora as rachaduras dinâmicas e cores em blocos isKinetic
                     if (!b.indestructible && !b.isKinetic && b.maxHits > 1) {
                         let damage = b.maxHits - b.hits;
                         if (damage > 0) {
