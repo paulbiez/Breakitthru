@@ -57,7 +57,7 @@ export class Game {
 
         this.initLevel(this.currentLevel);
         this.applyPaddleSettings();
-        this.resetBall('none'); // Garante que a bola exista e esteja sobre a nave no boot
+        this.resetBall('none'); 
     }
 
     setPaddleLevel(lvl) {
@@ -100,16 +100,13 @@ export class Game {
         playBgm();
         this.score = 0;
         this.lives = this.INITIAL_LIVES;
-        document.querySelectorAll('#menu, #settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
-                .forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.modal-menu').forEach(el => el.style.display = 'none');
         this.initLevel(this.currentLevel);
         this.resetBall('intro');
         this.gameRunning = true;
     }
 
     resumeGame() { 
-        let pauseEl = document.getElementById('pauseMenu');
-        if (pauseEl) pauseEl.style.display = 'none';
         playBgm();
         this.gameRunning = true; 
     }
@@ -119,8 +116,7 @@ export class Game {
     quitToMainMenu() { 
         this.gameRunning = false; 
         stopBgm();
-        document.querySelectorAll('#settingsMenu, #settingsSoundMenu, #settingsPaddleMenu, #settingsBallSpeedMenu, #settingsBallSizeMenu, #pauseMenu, #gameOverMenu, #winOverlay')
-                .forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.modal-menu').forEach(el => el.style.display = 'none');
         document.getElementById('menu').style.display = 'flex';
         let btn = document.getElementById('selectLevelBtn');
         if (btn) btn.innerText = `Selecionar Fase: ${this.currentLevel}`;
@@ -346,8 +342,7 @@ export class Game {
             this.prepareActive = true;
             this.prepareTimer = 180;
         } else {
-            // Em estado idle/boot, mantém a bola sobre a nave sem disparar
-            this.balls[0].stuck = true;
+            this.balls[0].stuck = true; 
         }
     }
 
