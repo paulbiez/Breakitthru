@@ -151,17 +151,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- CONTROLE DA RAQUETE (ESCALA 1 A 6) ---
+    // --- CONTROLE DA NAVE (ESCALA 1 A 5) ---
     const paddleSlider = document.getElementById('paddleSlider');
     if (paddleSlider) {
         paddleSlider.min = "1";
-        paddleSlider.max = "6";
+        paddleSlider.max = "5";
         paddleSlider.value = game.paddleLevel.toString();
     }
 
     function updatePaddlePreview(val) {
         let lvl = parseInt(val, 10);
-        if (lvl > 6) lvl = 6;
+        if (lvl > 5) lvl = 5;
         if (lvl < 1) lvl = 1;
 
         const text = document.getElementById('paddleValText');
@@ -170,7 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (preview) {
             const minW = 35;
             const maxW = 85.05;
-            const calculatedW = minW + ((lvl - 1) / 5) * (maxW - minW);
+            // Escala dividida por 4 (1 a 5)
+            const calculatedW = minW + ((lvl - 1) / 4) * (maxW - minW);
             preview.style.width = calculatedW + 'px';
         }
     }
@@ -178,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (paddleSlider) {
         ['input', 'change'].forEach(evt => {
             paddleSlider.addEventListener(evt, (e) => {
-                let clampedVal = Math.min(6, Math.max(1, parseInt(e.target.value, 10)));
+                let clampedVal = Math.min(5, Math.max(1, parseInt(e.target.value, 10)));
                 game.setPaddleLevel(clampedVal);
                 updatePaddlePreview(clampedVal);
             });

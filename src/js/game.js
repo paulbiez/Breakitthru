@@ -20,11 +20,11 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        this.paddleLevel = 3; // Nível padrão inicial ajustado para 3
+        this.paddleLevel = 3; // Valor padrão 3
         this.ballSpeedLevel = 3; 
         this.ballSizeLevel = 3;  
 
-        this.paddle = { x: 157.5, y: 520, width: 55.02, height: 12, glue: false, alpha: 1.0, extraScale: 0 };
+        this.paddle = { x: 157.5, y: 520, width: 60.025, height: 12, glue: false, alpha: 1.0, extraScale: 0 };
         this.balls = [];
         this.bricks = [];
         this.bonuses = [];
@@ -76,8 +76,8 @@ export class Game {
     applyPaddleSettings() {
         const minW = 35;
         const maxW = 85.05;
-        // Escala recalculada para o intervalo de 1 a 6
-        this.paddle.width = minW + ((this.paddleLevel - 1) / 5) * (maxW - minW);
+        // Escala recalculada para o intervalo de 1 a 5 (dividido por 4)
+        this.paddle.width = minW + ((this.paddleLevel - 1) / 4) * (maxW - minW);
 
         if (this.paddle.x < 0) this.paddle.x = 0;
         if (this.paddle.x + this.paddle.width > this.canvas.width) {
