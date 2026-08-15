@@ -243,14 +243,17 @@ export class Game {
             for (let c = 0; c < pattern[r].length; c++) {
                 let val = pattern[r][c];
                 if (val > 0) {
-                    let isMoving = (val === 6);
-                    let isBumper = (val === 7);
+                    let isMoving = false;
+                    let isBumper = false;
+                    let isKinetic = false;
                     let hits = 1; 
                     let color = '#FFFFFF'; 
                     let points = 10; 
                     let indestructible = false;
                     let lightBase = null; 
                     let darkBase = null; 
+                    let speed = 1.5;
+                    let moveRange = 40;
                     
                     if (val === 6) { 
                         color = '#FF00FF'; points = 50; isMoving = true; hits = 2; 
@@ -262,6 +265,15 @@ export class Game {
                         } else {
                             lightBase = '#ffea00'; darkBase = '#807500';
                         }
+                    }
+                    else if (val === 8) {
+                        color = '#FFFF00'; 
+                        hits = 3; 
+                        points = 0; 
+                        indestructible = true; 
+                        isKinetic = true;
+                        speed = 0.8;
+                        moveRange = 30;
                     }
                     else if (val === 5) {
                         color = '#DAA520'; hits = Infinity; points = 0; indestructible = true;
@@ -283,10 +295,10 @@ export class Game {
                         y: this.topWallY + 35 + r * (this.brickH + this.padding),
                         w: this.brickW, h: this.brickH,
                         startX: startX + c * (this.brickW + this.padding),
-                        moveDir: 1, speed: 1.5,
+                        moveDir: 1, speed: speed, moveRange: moveRange,
                         status: 1, hits: hits, maxHits: hits, color: color, points: points, 
                         indestructible: indestructible, hasCapsule: false,
-                        isMoving: isMoving, isBumper: isBumper,
+                        isMoving: isMoving, isBumper: isBumper, isKinetic: isKinetic,
                         flashTimer: 0,
                         lightBase: lightBase, 
                         darkBase: darkBase    
@@ -295,7 +307,7 @@ export class Game {
             }
         }
 
-        let activeDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible);
+        let activeDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible && !b.isKinetic);
         let capsuleCount = Math.floor(activeDestructibleBricks.length * 0.25);
         let shuffled = [...activeDestructibleBricks].sort(() => Math.random() - 0.5);
         for (let i = 0; i < capsuleCount && i < shuffled.length; i++) {
@@ -485,7 +497,7 @@ export class Game {
             if (b.status === 1) {
                 if (b.isMoving) {
                     b.x += b.speed * b.moveDir * ts;
-                    if (b.x > b.startX + 40 || b.x < b.startX - 40) {
+                    if (b.x > b.startX + b.moveRange || b.x < b.startX - b.moveRange) {
                         b.moveDir *= -1;
                     }
                 }
@@ -607,7 +619,15 @@ export class Game {
 
                     hitBricks.forEach(hit => {
                         let bk = hit.brick;
-                        if (!bk.indestructible && !bk.isBumper) {
+                        
+                        if (bk.isKinetic) {
+                            if (!bk.isMoving) {
+                                bk.hits--;
+                                if (bk.hits <= 0) {
+                                    bk.isMoving = true;
+                                }
+                            }
+                        } else if (!bk.indestructible && !bk.isBumper) {
                             bk.hits--;
                             if (bk.hits <= 0) {
                                 bk.status = 0; this.score += bk.points;
@@ -627,7 +647,7 @@ export class Game {
             }
         }
 
-        let remainingDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible).length;
+        let remainingDestructibleBricks = this.bricks.filter(b => b.status === 1 && !b.indestructible && !b.isKinetic).length;
         if (remainingDestructibleBricks === 0) { this.advanceToNextLevel(); return; }
 
         for (let i = this.bonuses.length - 1; i >= 0; i--) {
@@ -895,7 +915,7 @@ export class Game {
                     this.ctx.fillStyle = b.color; 
                     this.ctx.fillRect(b.x, b.y, b.w, b.h); 
 
-                    if (!b.indestructible && b.maxHits > 1) {
+                    if (!b.indestructible && !b.isKinetic && b.maxHits > 1) {
                         let damage = b.maxHits - b.hits;
                         if (damage > 0) {
                             this.drawCracks(this.ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, damage);
