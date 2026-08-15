@@ -18,13 +18,13 @@ export function getLevelPattern(level) {
             // 8 = Ouro Cinético (Abre passagem com 3 hits)
             // 3 = Amarelo Destrutível (Alvo principal)
             [5, 0, 5, 5, 5, 5, 5, 5, 5],
-            [5, 0, 5, 0, 0, 0, 0, 0, 5],
+            [8, 0, 5, 0, 0, 0, 0, 0, 5],
             [5, 0, 5, 0, 5, 5, 5, 0, 5],
-            [5, 0, 8, 0, 0, 0, 5, 0, 5], // Bloco 8 cria um atalho na parede esquerda interna
+            [5, 0, 8, 0, 0, 0, 5, 0, 8], // Bloco 8 cria um atalho na parede esquerda interna
             [5, 0, 5, 0, 1, 0, 5, 0, 5], 
             [5, 0, 5, 0, 1, 0, 5, 0, 5], 
             [5, 0, 5, 0, 1, 0, 5, 0, 5], 
-            [5, 0, 5, 0, 5, 0, 8, 0, 5], // Bloco 8 cria um atalho na parede direita interna
+            [8, 0, 5, 0, 5, 0, 8, 0, 8], // Bloco 8 cria um atalho na parede direita interna
             [5, 0, 8, 0, 0, 0, 5, 0, 5],
             [5, 0, 5, 5, 5, 5, 5, 0, 5],
             [5, 0, 0, 0, 0, 0, 0, 0, 5],
