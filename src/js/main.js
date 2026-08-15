@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (preview) {
             const minW = 35;
             const maxW = 85.05;
-            const calculatedW = minW + ((lvl - 1) / 9) * (maxW - minW);
+            const calculatedW = minW + ((lvl - 1) / 5) * (maxW - minW);
             preview.style.width = calculatedW + 'px';
         }
     }

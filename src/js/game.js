@@ -20,7 +20,7 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        this.paddleLevel = 10;   
+        this.paddleLevel = 3;   
         this.ballSpeedLevel = 3; 
         this.ballSizeLevel = 3;  
 
@@ -60,7 +60,7 @@ export class Game {
     }
 
     setPaddleLevel(lvl) {
-        this.paddleLevel = parseInt(lvl, 10);
+        this.paddleLevel = parseInt(lvl, 6);
         this.applyPaddleSettings();
     }
 
@@ -76,7 +76,7 @@ export class Game {
     applyPaddleSettings() {
         const minW = 35;
         const maxW = 85.05;
-        this.paddle.width = minW + ((this.paddleLevel - 1) / 9) * (maxW - minW);
+        this.paddle.width = minW + ((this.paddleLevel - 1) / 5) * (maxW - minW);
 
         if (this.paddle.x < 0) this.paddle.x = 0;
         if (this.paddle.x + this.paddle.width > this.canvas.width) {
@@ -1002,3 +1002,4 @@ export class Game {
         }
     }
 }
+this.paddleLevel
