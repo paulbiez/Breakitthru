@@ -20,7 +20,7 @@ export class Game {
         this.lives = this.INITIAL_LIVES;
         this.highScore = parseInt(localStorage.getItem('breakout_highscore'), 10) || 0;
 
-        this.paddleLevel = 3; // Valor padrão 3
+        this.paddleLevel = 3; 
         this.ballSpeedLevel = 3; 
         this.ballSizeLevel = 3;  
 
@@ -57,6 +57,7 @@ export class Game {
 
         this.initLevel(this.currentLevel);
         this.applyPaddleSettings();
+        this.resetBall('none'); // Garante que a bola exista e esteja sobre a nave no boot
     }
 
     setPaddleLevel(lvl) {
@@ -76,7 +77,6 @@ export class Game {
     applyPaddleSettings() {
         const minW = 35;
         const maxW = 85.05;
-        // Escala recalculada para o intervalo de 1 a 5 (dividido por 4)
         this.paddle.width = minW + ((this.paddleLevel - 1) / 4) * (maxW - minW);
 
         if (this.paddle.x < 0) this.paddle.x = 0;
@@ -346,7 +346,8 @@ export class Game {
             this.prepareActive = true;
             this.prepareTimer = 180;
         } else {
-            this.launchBalls();
+            // Em estado idle/boot, mantém a bola sobre a nave sem disparar
+            this.balls[0].stuck = true;
         }
     }
 
