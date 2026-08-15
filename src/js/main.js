@@ -160,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (preview) {
             const minW = 35;
             const maxW = 85.05;
+            // Escala recalculada para o intervalo de 1 a 6
             const calculatedW = minW + ((lvl - 1) / 5) * (maxW - minW);
             preview.style.width = calculatedW + 'px';
         }
