@@ -1,127 +1,230 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Breakout Arcade</title>
-    <link rel="stylesheet" href="src/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup - Despertar Cinético Indestrutível</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body {
+    background: #0b0b12;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    gap: 20px;
+  }
+  
+  .controls {
+    background: #1c1c1e;
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    text-align: center;
+  }
+
+  h2 { color: #FFD700; font-size: 1.2rem; margin-bottom: 5px; }
+  p { font-size: 0.9rem; color: #ccc; }
+
+  canvas {
+    background: #000;
+    border: 4px solid #333;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    cursor: crosshair;
+  }
+  
+  .btn-reset {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #1e90ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+  }
+  .btn-reset:active { transform: scale(0.95); }
+</style>
 </head>
 <body>
-    <div id="gameContainer">
-        <!-- Canvas Principal -->
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
 
-        <!-- Botões do HUD Superior -->
-        <div id="hudButtons">
-            <button id="btnPause" class="hud-btn" aria-label="Pausar">❚❚</button>
-            <button id="btnHudBgm" class="hud-btn" aria-label="Música">♫</button>
-            <button id="btnHudSfx" class="hud-btn" aria-label="Efeitos Sonoros">🔊</button>
-        </div>
+  <div class="controls">
+    <h2>Mecânica: Despertar Cinético (Indestrutível)</h2>
+    <p>Clique 2 vezes. A velocidade foi reduzida e eles não quebram mais.</p>
+    <button class="btn-reset" onclick="initBricks()">Resetar Blocos</button>
+  </div>
 
-        <!-- Menu Principal -->
-        <div id="menu" class="modal-menu">
-            <h1 class="game-title">BREAKOUT</h1>
-            <button id="btnStart" class="menu-btn primary">Iniciar Jogo</button>
-            <button id="selectLevelBtn" class="menu-btn">Selecionar Fase: 1</button>
-            <button id="btnSettings" class="menu-btn">Configurações</button>
-        </div>
+  <canvas id="brickCanvas" width="400" height="300"></canvas>
 
-        <!-- Menu de Configurações Geral -->
-        <div id="settingsMenu" class="modal-menu" style="display: none;">
-            <h2>Configurações</h2>
-            <button id="btnSettingsSound" class="menu-btn">Sons & Música</button>
-            <button id="btnSettingsPaddle" class="menu-btn">Tamanho da Nave</button>
-            <button id="btnSettingsBallSpeed" class="menu-btn">Velocidade da Bola</button>
-            <button id="btnSettingsBallSize" class="menu-btn">Tamanho da Bola</button>
-            <button id="btnSettingsSave" class="menu-btn primary">Salvar e Voltar</button>
-        </div>
+<script>
+  const canvas = document.getElementById('brickCanvas');
+  const ctx = canvas.getContext('2d');
 
-        <!-- Submenu: Sons & Música -->
-        <div id="settingsSoundMenu" class="modal-menu" style="display: none;">
-            <h2>Áudio</h2>
-            <div class="setting-group">
-                <label>Música de Fundo (BGM)</label>
-                <div class="setting-row">
-                    <input type="range" id="bgmVolumeSlider" min="0" max="100" value="50" />
-                    <span id="bgmValText">50%</span>
-                </div>
-            </div>
-            <div class="setting-group">
-                <label>Efeitos Sonoros (SFX)</label>
-                <div class="setting-row">
-                    <input type="range" id="sfxVolumeSlider" min="0" max="100" value="50" />
-                    <span id="sfxValText">50%</span>
-                </div>
-            </div>
-            <button id="btnSoundBack" class="menu-btn">Voltar</button>
-        </div>
+  const brickW = 40;
+  const brickH = 20;
+  const padding = 10; 
+  let bricks = [];
 
-        <!-- Submenu: Tamanho da Nave -->
-        <div id="settingsPaddleMenu" class="modal-menu" style="display: none;">
-            <h2>Tamanho da Nave</h2>
-            <div class="setting-row">
-                <input type="range" id="paddleSlider" min="1" max="5" value="3" />
-                <span id="paddleValText">3</span>
-            </div>
-            <div class="preview-box">
-                <div id="paddlePreview"></div>
-            </div>
-            <button id="btnPaddleBack" class="menu-btn">Voltar</button>
-        </div>
+  function initBricks() {
+      bricks = [];
+      const startX = 60;
+      const startY = 80;
 
-        <!-- Submenu: Velocidade da Bola -->
-        <div id="settingsBallSpeedMenu" class="modal-menu" style="display: none;">
-            <h2>Velocidade da Bola</h2>
-            <div class="setting-row">
-                <input type="range" id="speedSlider" min="1" max="5" value="3" />
-                <span id="speedValText">3</span>
-            </div>
-            <div class="preview-box">
-                <div id="speedBallTrack">
-                    <div id="speedBallAnim"></div>
-                </div>
-            </div>
-            <button id="btnSpeedBack" class="menu-btn">Voltar</button>
-        </div>
+      for (let c = 0; c < 5; c++) {
+          bricks.push({
+              x: startX + c * (brickW + padding * 3), 
+              y: startY + (c % 2 === 0 ? 0 : 50),     
+              w: brickW, 
+              h: brickH,
+              startX: startX + c * (brickW + padding * 3),
+              color: '#FFFF00',
+              hitsTaken: 0, // Conta quantos hits o bloco já tomou
+              isMoving: false, 
+              moveDir: 1, 
+              speed: 0.8, // Velocidade reduzida para um movimento mais mecânico e rítmico
+              status: 1
+          });
+      }
+  }
 
-        <!-- Submenu: Tamanho da Bola -->
-        <div id="settingsBallSizeMenu" class="modal-menu" style="display: none;">
-            <h2>Tamanho da Bola</h2>
-            <div class="setting-row">
-                <input type="range" id="sizeSlider" min="1" max="5" value="3" />
-                <span id="sizeValText">3</span>
-            </div>
-            <div class="preview-box">
-                <div id="ballSizePreview"></div>
-            </div>
-            <button id="btnSizeBack" class="menu-btn">Voltar</button>
-        </div>
+  function drawCracks(ctx, x, y, w, h, damageLevel) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.clip();
 
-        <!-- Menu de Pause -->
-        <div id="pauseMenu" class="modal-menu" style="display: none;">
-            <h2>Jogo Pausado</h2>
-            <button class="menu-btn btn-continue primary">Continuar</button>
-            <button class="menu-btn btn-restart">Reiniciar Fase 1</button>
-            <button class="menu-btn btn-quit">Menu Principal</button>
-        </div>
+      const renderCrackPath = (points) => {
+          ctx.beginPath();
+          ctx.moveTo(x + points[0].x * w, y + points[0].y * h + 1);
+          for(let i = 1; i < points.length; i++) {
+              ctx.lineTo(x + points[i].x * w, y + points[i].y * h + 1);
+          }
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.lineWidth = 1.5;
+          ctx.lineJoin = 'round';
+          ctx.stroke();
 
-        <!-- Menu de Game Over -->
-        <div id="gameOverMenu" class="modal-menu" style="display: none;">
-            <h2 id="gameOverTitle">FIM DE JOGO</h2>
-            <p id="finalScore" class="score-display">Pontos Totais: 0</p>
-            <button class="menu-btn btn-continue primary">Continuar (3 Vidas)</button>
-            <button class="menu-btn btn-quit">Menu Principal</button>
-        </div>
+          ctx.beginPath();
+          ctx.moveTo(x + points[0].x * w, y + points[0].y * h);
+          for(let i = 1; i < points.length; i++) {
+              ctx.lineTo(x + points[i].x * w, y + points[i].y * h);
+          }
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+      };
 
-        <!-- Tela de Vitória -->
-        <div id="winOverlay" class="modal-menu" style="display: none;">
-            <h2 class="win-title">PARABÉNS!</h2>
-            <p id="winScore" class="score-display">Pontos Totais: 0</p>
-            <button class="menu-btn btn-quit primary">Menu Principal</button>
-        </div>
-    </div>
+      if (damageLevel >= 1) {
+          renderCrackPath([
+              {x: 0.1, y: 0}, {x: 0.25, y: 0.4}, {x: 0.15, y: 0.7}, {x: 0.4, y: 0.9}
+          ]);
+      }
+      
+      if (damageLevel >= 2) {
+          renderCrackPath([
+              {x: 0.85, y: 1}, {x: 0.7, y: 0.6}, {x: 0.8, y: 0.3}, {x: 0.45, y: 0.1}
+          ]);
+          renderCrackPath([
+              {x: 0.95, y: 0.3}, {x: 0.7, y: 0.4}, {x: 0.6, y: 0.6}
+          ]);
+      }
+      ctx.restore();
+  }
 
-    <!-- Script de Inicialização Modular -->
-    <script type="module" src="src/js/main.js"></script>
+  function drawBeveledBrick(ctx, b) {
+      if (b.status === 0) return;
+
+      const depth = 4;
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+
+      const innerX = b.x + 1;
+      const innerY = b.y + 1;
+      const innerW = b.w - 2;
+      const innerH = b.h - 2;
+
+      ctx.fillStyle = b.color;
+      ctx.fillRect(innerX, innerY, innerW, innerH);
+
+      // Renderiza as rachaduras baseadas nos hits tomados (0, 1 ou 2+)
+      if (b.hitsTaken > 0) {
+          drawCracks(ctx, innerX, innerY, innerW, innerH, b.hitsTaken);
+      }
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.beginPath();
+      ctx.moveTo(innerX, innerY);
+      ctx.lineTo(innerX + innerW, innerY);
+      ctx.lineTo(innerX + innerW - depth, innerY + depth);
+      ctx.lineTo(innerX + depth, innerY + depth);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(innerX, innerY);
+      ctx.lineTo(innerX + depth, innerY + depth);
+      ctx.lineTo(innerX + depth, innerY + innerH - depth);
+      ctx.lineTo(innerX, innerY + innerH);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.moveTo(innerX, innerY + innerH);
+      ctx.lineTo(innerX + innerW, innerY + innerH);
+      ctx.lineTo(innerX + innerW - depth, innerY + innerH - depth);
+      ctx.lineTo(innerX + depth, innerY + innerH - depth);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(innerX + innerW, innerY);
+      ctx.lineTo(innerX + innerW, innerY + innerH);
+      ctx.lineTo(innerX + innerW - depth, innerY + innerH - depth);
+      ctx.lineTo(innerX + innerW - depth, innerY + depth);
+      ctx.fill();
+  }
+
+  function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      bricks.forEach(b => {
+          if (b.status === 1 && b.isMoving) {
+              b.x += b.speed * b.moveDir;
+              if (b.x > b.startX + 30 || b.x < b.startX - 30) {
+                  b.moveDir *= -1;
+              }
+          }
+      });
+
+      bricks.forEach(b => drawBeveledBrick(ctx, b));
+      requestAnimationFrame(gameLoop);
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      bricks.forEach(b => {
+          if (b.status === 1 && mouseX > b.x && mouseX < b.x + b.w && mouseY > b.y && mouseY < b.y + b.h) {
+              
+              b.hitsTaken++;
+              
+              // Modifica a estrutura da cor e movimento, mas remove a lógica de destruição (status = 0)
+              if (b.hitsTaken === 1) {
+                  b.color = '#DDDD00'; 
+              } else if (b.hitsTaken >= 2) {
+                  b.color = '#AAAA00'; 
+                  b.isMoving = true; 
+              }
+          }
+      });
+  });
+
+  initBricks();
+  requestAnimationFrame(gameLoop);
+</script>
 </body>
 </html>
